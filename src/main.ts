@@ -317,7 +317,7 @@ function renderBuy(m: Model) {
   $('lego-n').textContent = String(s.lego.length);
   $('lego-total').textContent = `/${total} lots`;
   $<HTMLButtonElement>('buy-lego').disabled = s.lego.length === 0;
-  $('lego-after').hidden = true;
+  $('lego-guide').hidden = true;
   const other = models.get(`${size}|${!preferLego}`);
   const delta = other ? (preferLego ? m.checks.pieces - other.checks.pieces : other.checks.pieces - m.checks.pieces) : null;
   const plus = delta === null ? '' : ` (${delta >= 0 ? '+' : ''}${delta} pieces)`;
@@ -372,9 +372,13 @@ async function copyOrSave(xml: string, file: string): Promise<'copied' | 'downlo
 }
 $('buy-lego').addEventListener('click', () => orderAction(m => {
   const n = downloadLego(m);
-  $('lego-after-text').textContent = n > 1 ? `${n} lists downloaded` : 'List downloaded';
-  $('lego-after').hidden = false;
+  $('lego-file').textContent = n > 1
+    ? `${n} files saved to your Downloads (${baseName()}-pick-a-brick-1-of-${n}.csv …): upload them one after the other`
+    : `${baseName()}-pick-a-brick.csv · saved to your Downloads`;
+  const g = $('lego-guide'); g.hidden = false;
+  g.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }));
+$('lego-again').addEventListener('click', () => orderAction(m => { downloadLego(m); }));
 async function buyBrickLink(all: boolean) {
   await orderAction(async m => {
     const missing = orderSummary(m).brickLinkOnly.length;

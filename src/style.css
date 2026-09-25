@@ -268,3 +268,20 @@ dialog#order-panel { max-height: calc(100dvh - 24px); overflow: auto; }
 .howorder-body b { color: var(--ink); }
 @media (max-width: 700px) { .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; } .lot canvas { width: 44px; height: 35px; } .shoplist { padding: 10px; } }
 .lot canvas { background: #eef2f5; border-radius: 8px; }
+
+/* "Buy at LEGO in 3 steps" guide, shown after the click */
+.guide { border: 2px solid #d6040f; border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; animation: guide-in .3s ease-out; }
+@keyframes guide-in { from { opacity: 0; transform: translateY(-6px); } }
+.guide h3 { margin: 0 0 10px; font-size: 17px; }
+.guide ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; }
+.guide li { display: flex; gap: 12px; align-items: flex-start; }
+.guide li > div { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+.guide b { font-size: 15px; } .guide small { color: var(--muted); font-size: 13px; }
+.gn { width: 30px; height: 30px; border-radius: 50%; background: var(--ink); color: var(--card); display: grid; place-items: center; font-weight: 800; flex: none; }
+.guide li.done .gn { background: var(--ok); }
+.go-lego { background: #d6040f; margin-top: 4px; }
+.shots { margin: 6px 0 0; display: grid; gap: 8px; width: 100%; }
+.shots img { width: 100%; max-width: 620px; display: block; border-radius: 10px; border: 1px solid var(--line); background: #fff; }
+.shot2 { position: relative; max-width: 420px; display: block; }
+.shot2 .ring { position: absolute; left: 0; right: 0; top: 40%; bottom: 11%; border: 4px solid #F5B800; border-radius: 12px; box-shadow: 0 0 0 8px rgba(245,184,0,.25); }
+.shots figcaption { font-size: 11.5px; color: var(--muted); }

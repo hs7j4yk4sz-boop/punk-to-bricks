@@ -127,7 +127,6 @@
         <div class="ctas">
           <div class="cta">
             <button class="ctab lego" id="buy-lego"><span class="logo" aria-hidden="true">🧱</span><span><b>Buy at LEGO</b><small>Pick a Brick · official shop</small></span><span class="n"><b id="lego-n"></b><span id="lego-total"></span></span></button>
-            <div class="after" id="lego-after" hidden>✓ <span id="lego-after-text">List downloaded</span> · <b>Next:</b> <a href="https://www.lego.com/pick-and-build/pick-a-brick" target="_blank" rel="noopener">open Pick a Brick</a> and click “Upload List” ↗</div>
             <label class="swline" id="lego-option"><input type="checkbox" id="prefer-lego" role="switch"><span class="sw" aria-hidden="true"></span><span id="prefer-text">Get every lot at LEGO: use only parts LEGO sells</span></label>
           </div>
           <div class="cta">
@@ -135,6 +134,19 @@
             <div class="after" id="bl-after" hidden>✓ <span id="bl-after-text">List copied</span> · <b>Next:</b> <a href="https://www.bricklink.com/v2/wanted/upload.page" target="_blank" rel="noopener">BrickLink Want → Upload</a>, choose “BrickLink XML format”, paste, then “Buy All” ↗</div>
             <p class="swline plain" id="bl-option">or <button class="linkbtn" id="copy-all"></button> to buy everything there</p>
           </div>
+        </div>
+        <div class="guide" id="lego-guide" hidden>
+          <h3>Buy at LEGO in 3 steps</h3>
+          <ol>
+            <li class="done"><span class="gn">✓</span><div><b>Your LEGO list is downloaded</b><small id="lego-file">Saved to your Downloads</small><button class="linkbtn" id="lego-again">Download it again</button></div></li>
+            <li><span class="gn">2</span><div><b>Go to Pick a Brick</b><small>LEGO’s own shop for single pieces. Uploading a list isn’t available in every country.</small><a class="btn go-lego" href="https://www.lego.com/pick-and-build/pick-a-brick" target="_blank" rel="noopener">Open Pick a Brick ↗</a></div></li>
+            <li><span class="gn">3</span><div><b>Click “Upload List”, then choose your file</b><small>It’s next to the search bar. LEGO adds every piece it has to your bag and lists any it couldn’t add: get those on BrickLink.</small>
+              <figure class="shots">
+                <img src="./help/pab-upload-button.png" alt="On Pick a Brick, the Upload List button next to the search bar" loading="lazy">
+                <span class="shot2"><img src="./help/pab-upload-dialog.png" alt="The upload window: Choose your file or drop it here" loading="lazy"><i class="ring" aria-hidden="true"></i></span>
+                <figcaption>Screenshots of the Pick a Brick website, for guidance.</figcaption>
+              </figure></div></li>
+          </ol>
         </div>
         <details class="howorder">
           <summary>How ordering works</summary>
