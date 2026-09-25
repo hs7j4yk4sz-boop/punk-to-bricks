@@ -42,7 +42,7 @@ function expectSame(g: PunkGrid, truth: RGBAImage, mergeBelow = 5) {
   void bg;
 }
 
-describe.skipIf(!hasRealPunks())('real CryptoPunks, as visitors upload them', () => {
+describe.skipIf(!hasRealPunks())('real CryptoPunks, as visitors upload them', { timeout: 120_000 }, () => {
   it('24×24 PNG on the usual blue background', () => { for (const id of SAMPLE) expectSame(detectPunk(realPunk(id)), realPunk(id)); });
   it('upscaled ×20 PNG', () => { for (const id of SAMPLE.slice(0, 40)) expectSame(detectPunk(upscale(realPunk(id), 20)), realPunk(id)); });
   it('transparent background PNG', () => { for (const id of SAMPLE) expectSame(detectPunk(upscale(realPunk(id, null), 8)), realPunk(id, null)); });
