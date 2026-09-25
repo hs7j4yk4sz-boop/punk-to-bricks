@@ -56,6 +56,8 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 32px; }
 .size { border: 0; background: none; padding: 8px 14px; border-radius: 9px; font-weight: 700; }
 .size small { display: block; font-weight: 500; font-size: 11px; color: var(--muted); }
 .size[aria-checked="true"] { background: var(--card); box-shadow: 0 1px 3px #0000001f; }
+.plate { display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; color: var(--muted); }
+.plate input { width: 92px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 10px; background: var(--card); color: var(--ink); font: inherit; }
 .actions { display: flex; gap: 6px; align-items: center; }
 .ghost { border: 1px solid var(--line); background: var(--card); border-radius: 10px; padding: 8px 14px; font-weight: 600; }
 .ghost:hover { border-color: var(--accent); }

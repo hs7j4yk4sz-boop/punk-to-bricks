@@ -352,50 +352,55 @@ function repair(layers: LayerRec[], notes: string[], groupOf: (L: LayerRec) => P
   };
   const cellsOf = (p: Piece) => { const o: number[] = []; for (let i = 0; i < p.w; i++) for (let j = 0; j < p.d; j++) o.push(key(p.x + i, p.z + j)); return o; };
   const near = (p: Piece, q: Piece, m: number) => q.x < p.x + p.w + m && p.x < q.x + q.w + m && q.z < p.z + p.d + m && p.z < q.z + q.d + m;
+  const gap = (p: Piece, q: Piece) => Math.max(0, q.x - p.x - p.w, p.x - q.x - q.w) + Math.max(0, q.z - p.z - p.d, p.z - q.z - q.d) + Math.abs(q.y - p.y) * 0.3;
   let pillars = 0;
-  for (let iter = 0; iter < 60; iter++) {
-    const st = floatingCount();
-    if (!st.n) break;
-    const idx = st.g.findIndex(v => !v), P = st.ps[idx];
-    const Li = layers.findIndex(L => L.y === P.y && L.pieces.includes(P));
-    const groundedCells = (L: LayerRec) => {
+
+  /** Try to attach floating piece P; returns true if fewer pieces float afterwards. */
+  const attempt = (P: Piece, st: ReturnType<typeof floatingCount>): boolean => {
+    const Li = layers.findIndex(L => L.pieces.includes(P));
+    const groundedCells = (li: number) => {
       const out = new Set<number>();
-      L.pieces.forEach(p => { if (st.g[st.ps.indexOf(p)]) cellsOf(p).forEach(k => out.add(k)); });
+      if (li < 0 || li >= layers.length) return out;
+      layers[li].pieces.forEach(p => { if (st.g[st.ps.indexOf(p)]) cellsOf(p).forEach(k => out.add(k)); });
       return out;
     };
-    const retile = (li: number, around: Piece, priority: number[], below: Set<number>) => {
+    const retile = (li: number, priority: number[], below: Set<number>) => {
       const L = layers[li], old = L.pieces;
-      const region = old.filter(q => !q.support && near(around, q, 3));
+      const region = old.filter(q => !q.support && near(P, q, 4));
       const cells: Layer = new Map();
       region.forEach(q => cellsOf(q).forEach(k => cells.set(k, L.cells.get(k)!)));
       const fresh = tileLayer(cells, { kind: L.kind, y: L.y, h: L.h, prefX: li % 2 === 0, sizes: SIZES, below, priority, group: groupOf(L) });
       L.pieces = [...old.filter(q => !region.includes(q)), ...fresh];
       return () => { L.pieces = old; };
     };
+    const pc = new Set(cellsOf(P));
     const tries: (() => (() => void) | null)[] = [
-      // same layer, resting on grounded pieces below
-      () => (Li > 0 ? retile(Li, P, cellsOf(P), groundedCells(layers[Li - 1])) : null),
-      // layer above, bridging from P to grounded pieces around it
+      // same layer: a piece covering P's cells that rests on grounded pieces below
+      () => (Li > 0 ? retile(Li, [...pc], groundedCells(Li - 1)) : null),
+      // layer above: a piece over P that also sits on grounded pieces of P's layer
       () => {
         if (Li + 1 >= layers.length) return null;
-        const up = layers[Li + 1], pc = new Set(cellsOf(P));
-        const pri = [...up.cells.keys()].filter(k => pc.has(k));
+        const pri = [...layers[Li + 1].cells.keys()].filter(k => pc.has(k));
         if (!pri.length) return null;
-        const g = groundedCells(layers[Li]); pc.forEach(k => g.delete(k));
-        return retile(Li + 1, P, pri, g);
+        const g = groundedCells(Li); pc.forEach(k => g.delete(k));
+        return retile(Li + 1, pri, g);
+      },
+      // layer below: a grounded piece reaching under P
+      () => {
+        if (Li < 2) return null;
+        const pri = [...layers[Li - 1].cells.keys()].filter(k => pc.has(k));
+        if (!pri.length) return null;
+        return retile(Li - 1, pri, groundedCells(Li - 2));
       },
     ];
-    let fixed = false;
     for (const t of tries) {
       const undo = t();
       if (!undo) continue;
-      if (floatingCount().n < st.n) { fixed = true; break; }
+      if (floatingCount().n < st.n) return true;
       undo();
     }
-    if (fixed) continue;
     // support column under P, down to the first piece
-    let done = false;
-    for (const k of cellsOf(P)) {
+    for (const k of pc) {
       const added: [LayerRec, Piece][] = [];
       let ok = false;
       for (let li = Li - 1; li >= 0; li--) {
@@ -405,10 +410,21 @@ function repair(layers: LayerRec[], notes: string[], groupOf: (L: LayerRec) => P
         const p: Piece = { x: kx(k), z: kz(k), y: L.y, h: L.h, w: 1, d: 1, c: P.c === BLACK ? BLACK : TRANS_CLEAR, kind: L.kind, part: partId(L.kind, 1, 1), group: groupOf(L), support: true };
         L.pieces.push(p); added.push([L, p]);
       }
-      if (ok && floatingCount().n < st.n) { done = true; pillars++; break; }
+      if (ok && floatingCount().n < st.n) { pillars++; return true; }
       for (const [L, p] of added) L.pieces.splice(L.pieces.indexOf(p), 1);
     }
-    if (!done) break;
+    return false;
+  };
+
+  for (let iter = 0; iter < 400; iter++) {
+    const st = floatingCount();
+    if (!st.n) break;
+    // work outwards from the solid part: floating pieces closest to it first
+    const solid = st.ps.filter((_, i) => st.g[i]);
+    const loose = st.ps.filter((_, i) => !st.g[i])
+      .map(P => ({ P, d: Math.min(...solid.filter(q => Math.abs(q.y - P.y) <= 6).map(q => gap(P, q)), 99) }))
+      .sort((a, b) => a.d - b.d).slice(0, 12);
+    if (!loose.some(({ P }) => attempt(P, st))) break;
   }
   if (pillars) notes.push(`${pillars} support stack${pillars > 1 ? 's' : ''} added under loose pieces.`);
 }

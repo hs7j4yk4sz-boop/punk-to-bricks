@@ -13,7 +13,7 @@ worker.onmessage = (e: MessageEvent<BuildReply>) => { pending.get(e.data.id)?.(e
 const build = (req: Omit<BuildRequest, 'id'>) => new Promise<BuildReply>(res => { const id = nextId++; pending.set(id, res); worker.postMessage({ ...req, id }); });
 
 const isPhone = matchMedia('(pointer: coarse)').matches && Math.min(screen.width, screen.height) < 600;
-const viewer = new Viewer($('view'), { lowPoly: isPhone });
+const viewer = new Viewer($('view'), { lowPoly: isPhone, label: '' });
 viewer.onFinished = () => { $('hint').hidden = false; };
 
 let grid: PunkGrid | null = null;
@@ -119,6 +119,8 @@ window.addEventListener('paste', e => {
 document.querySelectorAll<HTMLButtonElement>('.size').forEach(b => b.addEventListener('click', () => setSize(b.dataset.size as SizeId)));
 $('replay').addEventListener('click', () => { $('hint').hidden = true; viewer.play(); });
 $('skip').addEventListener('click', () => viewer.skip());
+export const plateLabel = () => { const n = $<HTMLInputElement>('punkno').value.replace(/\D/g, '').slice(0, 5); return n ? `#${n}` : ''; };
+$('punkno').addEventListener('input', () => viewer.setLabel(plateLabel()));
 
 const examples = [REFERENCE_PUNK, ...TEST_PUNKS.filter(p => ['cap', 'long-hair-woman', 'pipe', 'hoodie', 'alien-cap', 'ape-beanie', 'zombie', 'cowboy-hat', 'mohawk', 'vr'].includes(p.name))];
 for (const p of examples) {
@@ -134,4 +136,7 @@ for (const p of examples) {
 setSize(size);
 
 // dev/test hook: lets scripts drive the viewer frame by frame
-if (import.meta.env.DEV) Object.assign(window, { ptb: { viewer, start, punkToImage, examples, setSize } });
+if (import.meta.env.DEV) {
+  Promise.all([import('./core/detect'), import('./core/build')]).then(([d, b]) =>
+    Object.assign(window, { ptb: { viewer, start, punkToImage, examples, setSize, build, detectPunk: d.detectPunk, buildModel: b.buildModel, fileToImage } }));
+}

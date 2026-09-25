@@ -140,6 +140,23 @@ export function analyze(g: PunkGrid): Analysis {
   const detail = (k: number) => (pixelsOf.get(k) ?? 0) <= 6;
   const fillable = (r: number, c: number) => solid(r, c) && !lineBlack(r, c) && !COLOR_BY_ID.get(col(r, c))?.trans && !detail(col(r, c));
 
+  // Thin parts (not body) decide their depth as a whole: a part that mostly sits
+  // right of the face in the lower half (pipe, cigarette) goes to the front,
+  // anything else (brim, ear, smoke, hair strands) to the middle.
+  const thin = (r: number, c: number) => solid(r, c) && !body(r, c);
+  const anchorOf = new Map<string, 'center' | 'front'>();
+  for (let r = 0; r < N; r++) for (let c = 0; c < N; c++) {
+    if (!thin(r, c) || anchorOf.has(`${r},${c}`)) continue;
+    const part: [number, number][] = [[r, c]], seen = new Set([`${r},${c}`]);
+    for (let i = 0; i < part.length; i++) for (const [dr, dc] of D4) {
+      const rr = part[i][0] + dr, cc = part[i][1] + dc;
+      if (thin(rr, cc) && !seen.has(`${rr},${cc}`)) { seen.add(`${rr},${cc}`); part.push([rr, cc]); }
+    }
+    const front = part.filter(([pr, pc]) => { const bc = bodyCols.get(pr); return pr >= 15 && !!bc && pc > bc[1]; }).length;
+    const a: 'center' | 'front' = front * 2 >= part.length ? 'front' : 'center';
+    for (const k of seen) anchorOf.set(k, a);
+  }
+
   const px: (PixelInfo | null)[][] = [];
   for (let r = 0; r < N; r++) {
     const row: (PixelInfo | null)[] = [];
@@ -168,11 +185,7 @@ export function analyze(g: PunkGrid): Analysis {
       let fromTop = 0;
       while (r - fromTop - 1 >= 0 && solid(r - fromTop - 1, c)) fromTop++;
       const isBody = body(r, c);
-      let anchor: 'center' | 'front' = 'center';
-      if (!isBody) {
-        const bc = bodyCols.get(r);
-        if (r >= 15 && bc && c > bc[1]) anchor = 'front';
-      }
+      const anchor = isBody ? 'center' : anchorOf.get(`${r},${c}`) ?? 'center';
       row.push({ color: col(r, c), role: isBody ? 'body' : 'protrusion', anchor, fromTop, fill, fillBack, depthFrom: depthFrom.get(`${r},${c}`) });
     }
     px.push(row);

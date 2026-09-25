@@ -122,17 +122,10 @@ export class Viewer {
     this.nameplateIdx = m.pieces.findIndex(p => p.nameplate);
     if (this.nameplateIdx >= 0) {
       const p = m.pieces[this.nameplateIdx];
-      const c = document.createElement('canvas'); c.width = 1024; c.height = Math.round(1024 * p.d / p.w);
-      const x = c.getContext('2d')!;
-      x.fillStyle = COLOR_BY_ID.get(p.c)!.hex; x.fillRect(0, 0, c.width, c.height);
-      x.fillStyle = '#f2f2f2'; x.textAlign = 'center'; x.textBaseline = 'middle';
-      const label = (this.opts.label || 'PUNK').toUpperCase();
-      x.font = `bold ${Math.min(c.height * 0.62, (c.width * 1.5) / Math.max(4, label.length))}px system-ui, sans-serif`;
-      x.fillText(label, c.width / 2, c.height / 2 + 4);
-      const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
-      this.nameplate = new THREE.Mesh(new THREE.PlaneGeometry(p.w - 0.15, p.d - 0.15), new THREE.MeshStandardMaterial({ map: tex, roughness: 0.3 }));
+      this.nameplate = new THREE.Mesh(new THREE.PlaneGeometry(p.w - 0.15, p.d - 0.15), new THREE.MeshStandardMaterial({ roughness: 0.3 }));
       this.nameplate.rotation.x = -Math.PI / 2;
       this.root.add(this.nameplate);
+      this.setLabel(this.opts.label ?? '');
     }
     // shadows sized to the model
     const s = this.tl.height / 42;
@@ -140,6 +133,22 @@ export class Viewer {
     this.sun.shadow.camera.updateProjectionMatrix();
     this.sun.position.set(36 * s, 80 * s, 52 * s);
     this.pose(this.tl.end);
+    this.dirty = true;
+  }
+
+  /** Text printed on the name plate (render only: the real part is a plain tile). Empty = no text. */
+  setLabel(label: string) {
+    this.opts.label = label;
+    if (!this.nameplate || !this.model) return;
+    const p = this.model.pieces[this.nameplateIdx];
+    const mat = this.nameplate.material as THREE.MeshStandardMaterial;
+    mat.map?.dispose(); mat.map = null; mat.color.set(COLOR_BY_ID.get(p.c)!.hex);
+    this.nameplate.visible = !!label;
+    if (label) {
+      mat.color.set('#ffffff');
+      mat.map = nameplateTexture(label, p.w, p.d, COLOR_BY_ID.get(p.c)!.hex);
+    }
+    mat.needsUpdate = true;
     this.dirty = true;
   }
 
@@ -176,7 +185,7 @@ export class Viewer {
     for (const [g, n] of used) { g.count = n; g.instanceMatrix.needsUpdate = true; }
     if (this.nameplate) {
       const st = pieceState(tl, this.nameplateIdx, t), p = m.pieces[this.nameplateIdx];
-      this.nameplate.visible = st.visible;
+      this.nameplate.visible = st.visible && !!this.opts.label;
       this.nameplate.position.copy(this.home[this.nameplateIdx]); this.nameplate.position.y += st.dy + p.h * PL + 0.003;
     }
   }
@@ -232,4 +241,15 @@ export class Viewer {
 
   get isPlaying() { return this.playing; }
   get time() { return this.playing ? (performance.now() - this.t0) / 1000 : this.tl?.end ?? 0; }
+}
+
+export function nameplateTexture(label: string, w: number, d: number, bg: string): THREE.CanvasTexture {
+  const c = document.createElement('canvas'); c.width = 1024; c.height = Math.round(1024 * d / w);
+  const x = c.getContext('2d')!;
+  x.fillStyle = bg; x.fillRect(0, 0, c.width, c.height);
+  x.fillStyle = '#f2f2f2'; x.textAlign = 'center'; x.textBaseline = 'middle';
+  x.font = `bold ${Math.min(c.height * 0.62, (c.width * 1.5) / Math.max(4, label.length))}px system-ui, sans-serif`;
+  x.fillText(label, c.width / 2, c.height / 2 + 4);
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  return tex;
 }

@@ -92,8 +92,14 @@ export function mapColors(colors: PunkColor[], touching: Set<string>): number[] 
         return -1;
       };
       const ni = next(i), nj = next(j);
-      // only move to a brick that is still a good match (at most 8 ΔE worse)
-      const cost = (k: number, n: number) => (n < 0 || ranked[k][n].d - ranked[k][pick[k]].d > MAX_EXTRA ? Infinity : ranked[k][n].d - ranked[k][pick[k]].d);
+      // move the colour that costs least overall (ΔE lost × pixels): small
+      // details move, big areas keep their best match. A detail may drift
+      // further to stay visible; a big area only to a still-good match.
+      const cost = (k: number, n: number) => {
+        if (n < 0) return Infinity;
+        const extra = ranked[k][n].d - ranked[k][pick[k]].d;
+        return extra > (colors[k].count <= 6 ? 25 : MAX_EXTRA) ? Infinity : extra * colors[k].count;
+      };
       const ci = cost(i, ni), cj = cost(j, nj);
       if (ci === Infinity && cj === Infinity) continue;
       if (ci <= cj) pick[i] = ni; else pick[j] = nj;

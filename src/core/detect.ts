@@ -110,19 +110,29 @@ function sample(img: RGBAImage, x0: number, y0: number, size: number, _bg: RGB |
   if (uni / (N * N) < 0.8) throw new DetectError('not-grid', "We found a square, but it doesn't look like a clean 24×24 pixel grid. The image may be blurry, cropped or rotated. Try the original Punk image.");
 
   // Background: the colour of the top-left cell (Punks never touch it).
+  // A clean image (PNG) has exact colours: only the exact background colour
+  // is background, so faint Punk pixels close to it (semi-transparent smoke)
+  // survive. A noisy image (JPEG, screenshot) gets a tolerance sized to the
+  // noise measured along the edge.
   const bg = raw[0][0];
-  const isBg = (p: RGB | null) => (p === null ? bg === null : bg !== null && rgbDist(p, bg) <= TOL);
-  const edgeBg = [...raw[0], ...raw.map(r => r[0]), ...raw.map(r => r[N - 1])].filter(isBg).length;
+  const bgLab = bg ? rgbToLab(bg) : null;
+  const border = [...raw[0], ...raw.map(r => r[0]), ...raw.map(r => r[N - 1])];
+  const noise = bg ? Math.max(0, ...border.filter(p => p && rgbDist(p, bg) <= TOL).map(p => deltaE(rgbToLab(p!), bgLab!))) : 0;
+  const bgTol = noise < 1 ? 1.5 : Math.min(8, Math.max(4, noise * 1.5 + 2));
+  const isBg = (p: RGB | null) => (p === null ? bg === null : bg !== null && rgbDist(p, bg) <= TOL && deltaE(rgbToLab(p), bgLab!) < bgTol);
+  const bgCell: boolean[][] = raw.map(row => row.map(isBg));
+  const edgeBg = border.filter(isBg).length;
   if (edgeBg < 0.9 * (3 * N)) throw new DetectError('no-punk', "We found a pixel grid, but not a Punk: a Punk has a plain background along the top and both sides. Try a tighter crop or the original image.");
 
   // Cluster the cell colours (JPEG noise) into the Punk's own palette.
   const colors: { rgb: RGB; lab: ReturnType<typeof rgbToLab>; sum: RGB; count: number }[] = [];
-  const cells: number[][] = raw.map(row => row.map(p => {
-    if (isBg(p)) return -1;
+  const cells: number[][] = raw.map((row, r) => row.map((p, col) => {
+    if (bgCell[r][col]) return -1;
+    if (p === null) return -1;   // transparent hole inside the Punk: treat as empty
     const rgb = p as RGB, lab = rgbToLab(rgb);
-    let k = colors.findIndex(c => deltaE(c.lab, lab) < 5);
+    let k = colors.findIndex(q => deltaE(q.lab, lab) < 5);
     if (k < 0) { k = colors.length; colors.push({ rgb, lab, sum: [0, 0, 0], count: 0 }); }
-    const c = colors[k]; c.count++; c.sum = [c.sum[0] + rgb[0], c.sum[1] + rgb[1], c.sum[2] + rgb[2]];
+    const cl = colors[k]; cl.count++; cl.sum = [cl.sum[0] + rgb[0], cl.sum[1] + rgb[1], cl.sum[2] + rgb[2]];
     return k;
   }));
   const filled = colors.reduce((a, c) => a + c.count, 0);
