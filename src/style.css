@@ -103,3 +103,21 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 32px; }
 .progress { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; }
 .bar { flex: 1; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
 .bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }
+
+.how, .faq { margin-top: 36px; }
+.how h2, .faq h2 { font-size: 24px; margin: 0 0 14px; letter-spacing: -0.01em; }
+.steps { list-style: none; counter-reset: s; padding: 0; margin: 0; display: grid; gap: 12px; }
+@media (min-width: 760px) { .steps { grid-template-columns: repeat(3, 1fr); } }
+.steps li { counter-increment: s; background: var(--card); border-radius: var(--radius); padding: 16px; box-shadow: 0 1px 2px #0000000d; }
+.steps li::before { content: counter(s); display: inline-grid; place-items: center; width: 28px; height: 28px; border-radius: 50%; background: var(--sky); color: #16242f; font-weight: 800; margin-bottom: 8px; }
+.steps b { display: block; font-size: 17px; margin-bottom: 4px; }
+.steps span { color: var(--muted); font-size: 15px; }
+.sizes-compare { display: grid; gap: 12px; margin-top: 14px; }
+@media (min-width: 760px) { .sizes-compare { grid-template-columns: 1fr 1fr; } }
+.sizes-compare figure { margin: 0; background: var(--card); border-radius: var(--radius); overflow: hidden; }
+.sizes-compare img { display: block; width: 100%; height: auto; background: var(--sky); }
+.sizes-compare figcaption { padding: 10px 14px; font-size: 14px; color: var(--muted); }
+.sizes-compare figcaption b { color: var(--ink); }
+.faq details { background: var(--card); border-radius: 12px; padding: 12px 16px; margin-bottom: 8px; }
+.faq summary { font-weight: 700; cursor: pointer; }
+.faq p { color: var(--muted); margin: 8px 0 0; font-size: 15px; }

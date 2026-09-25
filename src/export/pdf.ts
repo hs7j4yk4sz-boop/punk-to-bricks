@@ -73,25 +73,22 @@ function punkCanvas(g: PunkGrid, px: number) {
   return c;
 }
 
-export interface BookletOptions { label: string; onProgress?: (done: number, total: number) => void; renderSize?: number }
+export interface PageOptions { label: string; renderSize?: number }
 
-export async function makeInstructions(m: Model, grid: PunkGrid, o: BookletOptions): Promise<Blob> {
-  const { jsPDF } = await import('jspdf');
+/**
+ * Draw the booklet's pages one by one (cover, steps, inventory) and hand each
+ * to `use`. `pick` limits which pages are drawn (e.g. a sample for the video).
+ */
+export async function drawPages(m: Model, grid: PunkGrid, o: PageOptions, use: (page: HTMLCanvasElement, n: number, total: number) => void | Promise<void>, pick: (n: number, total: number) => boolean = () => true): Promise<number> {
   const title = `${o.label ? `Punk ${o.label}` : 'Your Punk'} · ${m.size === 'xl' ? 'XL' : 'Mini'} brick bust`;
   const NB = Math.ceil(m.bom.length / BOM_PER);
   const total = 1 + m.steps.length + NB;
   const r = new StepRenderer(m, o.renderSize ?? 1100, o.label);
-  const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [PW, PH], compress: true, hotfixes: ['px_scaling'] });
-  pdf.setProperties({ title: `${title} — instructions`, creator: 'Punk to Bricks' });
-  const add = (c: HTMLCanvasElement, first = false) => {
-    if (!first) pdf.addPage([PW, PH], 'landscape');
-    pdf.addImage(c.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, PW, PH, undefined, 'FAST');
-  };
-  const tick = async (n: number) => { o.onProgress?.(n, total); await new Promise(res => setTimeout(res, 0)); };
   const c = m.checks;
+  const done = async (pg: HTMLCanvasElement, n: number) => { await use(pg, n, total); await new Promise(res => setTimeout(res, 0)); };
 
   // cover
-  {
+  if (pick(1, total)) {
     const [pg, x] = blankPage();
     const grad = x.createLinearGradient(0, 0, 0, PH); grad.addColorStop(0, '#7C95A5'); grad.addColorStop(1, '#5A7282');
     x.fillStyle = grad; x.fillRect(0, 0, PW, PH);
@@ -107,13 +104,12 @@ export async function makeInstructions(m: Model, grid: PunkGrid, o: BookletOptio
     x.font = `22px ${FONT}`; x.fillStyle = 'rgba(255,255,255,.85)';
     x.fillText('Unofficial fan project · made with Punk to Bricks · not affiliated with the LEGO Group or the CryptoPunks project', 80, 1040);
     x.fillText('Computer-checked, not physically build-tested.', 80, 1072);
-    add(pg, true);
-    await tick(1);
+    await done(pg, 1);
   }
 
   // steps
-  const colorsHex = (id: number) => renderHex(id);
   for (let si = 0; si < m.steps.length; si++) {
+    if (!pick(si + 2, total)) continue;
     const [pg, x] = blankPage();
     x.drawImage(r.stepView(si), 440, 0, 1100, 1100);
     const cnt = new Map<string, number>();
@@ -126,18 +122,19 @@ export async function makeInstructions(m: Model, grid: PunkGrid, o: BookletOptio
     items.forEach(([k, q], idx) => {
       const [kind, col, a, b] = k.split('|');
       const X0 = 55 + (idx % cols) * cw, Y0 = 55 + Math.floor(idx / cols) * rowH;
-      icon(x, X0 + 38, Y0 + 32, +b, +a, colorsHex(+col), cols > 3 ? 58 : 70, kind as Kind);
+      icon(x, X0 + 38, Y0 + 32, +b, +a, renderHex(+col), cols > 3 ? 58 : 70, kind as Kind);
       x.fillStyle = '#111'; x.font = `bold 24px ${FONT}`; x.fillText(`${q}x`, X0 + (cols > 3 ? 74 : 84), Y0 + 44);
     });
     x.fillStyle = INK; x.font = `bold 110px ${FONT}`;
     x.fillText(String(si + 1), 60, Math.min(PH - 120, 40 + bh + 120));
     footer(x, si + 2, title);
-    add(pg);
-    await tick(si + 2);
+    await done(pg, si + 2);
   }
 
   // parts inventory
   for (let bp = 0; bp < NB; bp++) {
+    const n = m.steps.length + 2 + bp;
+    if (!pick(n, total)) continue;
     const [pg, x] = blankPage();
     x.fillStyle = INK; x.font = `bold 54px ${FONT}`; x.fillText('Parts inventory' + (NB > 1 ? ` (${bp + 1}/${NB})` : ''), 60, 90);
     x.font = `26px ${FONT}`; x.fillStyle = '#44607a';
@@ -152,10 +149,23 @@ export async function makeInstructions(m: Model, grid: PunkGrid, o: BookletOptio
       x.fillText(it.name, X0 + 100, Y0 + 72);
       x.fillText(COLOR_BY_ID.get(it.color)!.name, X0 + 100, Y0 + 92);
     });
-    footer(x, m.steps.length + 2 + bp, title);
-    add(pg);
-    await tick(m.steps.length + 2 + bp);
+    footer(x, n, title);
+    await done(pg, n);
   }
   r.dispose();
+  return total;
+}
+
+export const PAGE_SIZE = [PW, PH] as const;
+
+export async function makeInstructions(m: Model, grid: PunkGrid, o: PageOptions & { onProgress?: (done: number, total: number) => void }): Promise<Blob> {
+  const { jsPDF } = await import('jspdf');
+  const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [PW, PH], compress: true, hotfixes: ['px_scaling'] });
+  pdf.setProperties({ title: `${o.label ? `Punk ${o.label}` : 'Your Punk'} brick bust — instructions`, creator: 'Punk to Bricks' });
+  await drawPages(m, grid, o, (pg, n, total) => {
+    if (n > 1) pdf.addPage([PW, PH], 'landscape');
+    pdf.addImage(pg.toDataURL('image/jpeg', 0.85), 'JPEG', 0, 0, PW, PH, undefined, 'FAST');
+    o.onProgress?.(n, total);
+  });
   return pdf.output('blob');
 }

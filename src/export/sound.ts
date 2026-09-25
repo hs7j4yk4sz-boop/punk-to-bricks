@@ -44,7 +44,8 @@ function click(area: number, rnd: () => number): Float32Array {
   return out;
 }
 
-export function makeSoundtrack(m: Model, tl: Timeline, duration: number): AudioBuffer {
+/** book: when the booklet appears and when each page flips ([start, duration], seconds from book start). */
+export function makeSoundtrack(m: Model, tl: Timeline, duration: number, book?: { at: number; flips: [number, number][] }): AudioBuffer {
   const n = Math.ceil(duration * SR), out = new Float32Array(n), rnd = rng(7);
   const add = (sig: Float32Array, t: number, gain: number) => {
     const i0 = Math.round(t * SR);
@@ -64,6 +65,20 @@ export function makeSoundtrack(m: Model, tl: Timeline, duration: number): AudioB
     for (let i = 0; i < len; i++) { const t = i / SR; thud[i] = Math.sin(2 * Math.PI * 140 * t) * Math.exp(-t * 28) + 0.5 * Math.sin(2 * Math.PI * 310 * t) * Math.exp(-t * 40) + 0.6 * nz[i] * Math.exp(-t * 60); }
     add(thud, tc - 0.01, 1.3);
     for (let k = 0; k < 7; k++) add(click(4, rnd), tc + 0.004 * k + rnd() * 0.03, 0.8);
+  }
+  // whoosh into the booklet, then each page: a swish and a soft slap as it lands
+  if (book) {
+    const wn = Math.round(0.9 * SR), w = bandNoise(wn, 400, 3500, rnd);
+    for (let i = 0; i < wn; i++) w[i] *= Math.pow(Math.sin((Math.PI * i) / wn), 2);
+    add(w, book.at - 0.25, 0.35);
+    for (const [s0, d] of book.flips) {
+      const L = Math.max(0.18, d * 0.9), n2 = Math.round(L * SR), sw = bandNoise(n2, 900, 7000, rnd);
+      for (let i = 0; i < n2; i++) sw[i] *= Math.pow(Math.sin((Math.PI * i) / n2), 1.5);
+      add(sw, book.at + s0, 0.28 + 0.12 * Math.min(1, 0.4 / d));
+      const sn = Math.round(0.06 * SR), slap = bandNoise(sn, 200, 4000, rnd);
+      for (let i = 0; i < sn; i++) slap[i] *= Math.exp((-i / SR) * 80);
+      add(slap, book.at + s0 + d * 0.95, 0.35);
+    }
   }
   // small room: a few soft echoes
   const wet = new Float32Array(n);

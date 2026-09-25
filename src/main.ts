@@ -155,8 +155,9 @@ $('dl-pdf').addEventListener('click', () => run('Instructions', async () => {
 }));
 for (const format of ['square', 'story'] as const) $(format === 'square' ? 'vid-square' : 'vid-story').addEventListener('click', () => run('Video', async () => {
   const { recordVideo } = await import('./export/video');
-  progress('Recording the video… keep this tab open', 0);
-  const { blob, ext } = await recordVideo(current()!, { format, label: plateLabel(), small: isPhone, onProgress: f => progress('Recording the video… keep this tab open', f) });
+  progress('Preparing the booklet pages…', 0);
+  const { blob, ext } = await recordVideo(current()!, grid!, { format, label: plateLabel(), small: isPhone,
+    onProgress: (stage, f) => progress(stage === 'pages' ? 'Preparing the booklet pages…' : 'Recording the video (24 s)… keep this tab open', f) });
   save(blob, `${baseName()}-${format === 'story' ? '9x16' : 'square'}.${ext}`);
 }));
 function shareLink() {

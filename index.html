@@ -6,6 +6,15 @@
   <title>Punk to Bricks</title>
   <meta name="description" content="Turn your CryptoPunk into a brick bust you can really build: 3D build animation, PDF instructions and a BrickLink parts list. Free, and your image never leaves your browser.">
   <meta name="theme-color" content="#B4DBF1">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Punk to Bricks">
+  <meta property="og:description" content="Turn your CryptoPunk into a brick bust you can really build: 3D build animation, PDF instructions and a BrickLink parts list. Free, and your image never leaves your browser.">
+  <meta property="og:image" content="https://hs7j4yk4sz-boop.github.io/punk-to-bricks/og.png">
+  <meta property="og:url" content="https://hs7j4yk4sz-boop.github.io/punk-to-bricks/">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Punk to Bricks">
+  <meta name="twitter:description" content="Turn your CryptoPunk into a brick bust you can really build.">
+  <meta name="twitter:image" content="https://hs7j4yk4sz-boop.github.io/punk-to-bricks/og.png">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23B4DBF1'/%3E%3Crect x='3' y='6' width='10' height='7' fill='%23AA7D55'/%3E%3Crect x='4' y='4' width='3' height='2' fill='%23AA7D55'/%3E%3Crect x='9' y='4' width='3' height='2' fill='%23AA7D55'/%3E%3C/svg%3E">
   <link rel="stylesheet" href="/src/style.css">
 </head>
@@ -80,6 +89,27 @@
         </div>
         <div class="progress" id="progress" hidden><div class="bar"><i id="bar"></i></div><span id="progress-text"></span></div>
       </div>
+    </section>
+    <section class="how" id="how">
+      <h2>How it works</h2>
+      <ol class="steps">
+        <li><b>Drop your Punk</b><span>The original PNG, a download from a marketplace or a phone screenshot. We find the 24×24 pixels and read the colours.</span></li>
+        <li><b>Watch it build</b><span>Pick Mini or XL. Each pixel becomes bricks and plates in real colours, and the bust builds itself in 3D, cap first set aside, then put on.</span></li>
+        <li><b>Build it for real</b><span>Download the step-by-step instructions (PDF), the parts list and a BrickLink list you can upload to buy every piece.</span></li>
+      </ol>
+      <div class="sizes-compare">
+        <figure><img src="./hero-xl.jpg" alt="A Punk as an XL brick bust" width="540" height="540" loading="lazy"><figcaption><b>XL</b> · 1 pixel = 2×2 studs, hollow inside · about 1,250 pieces · about 25 × 21 × 35 cm</figcaption></figure>
+        <figure><img src="./hero-mini.jpg" alt="A Punk as a Mini brick bust" width="540" height="540" loading="lazy"><figcaption><b>Mini</b> · 1 pixel = 1 stud · about 400 pieces · about 12 × 9 × 17 cm</figcaption></figure>
+      </div>
+    </section>
+
+    <section class="faq">
+      <h2>Questions</h2>
+      <details><summary>Is my image uploaded anywhere?</summary><p>No. Everything happens in your browser: reading the image, designing the model, the 3D view, the PDF and the video. There is no server and no AI behind this site, and nothing about your Punk is stored or sent.</p></details>
+      <details><summary>Can I really build it?</summary><p>Every model is checked by computer: all pieces are standard parts in real colours, every piece is attached to the base (0 floating), no two pieces overlap (0 collisions) and the centre of mass sits over the base. The site shows these checks for your model and says so plainly if one fails. Models have not been built with real bricks yet, so treat your first build as a test. A few colours can be hard to find in large plates.</p></details>
+      <details><summary>How do I get the bricks?</summary><p>Download the BrickLink list (XML). On BrickLink, open Want → Upload, paste or upload the file, then buy from one or several sellers. The CSV parts list works in any spreadsheet.</p></details>
+      <details><summary>What are the clear pieces?</summary><p>Some Punks have details that touch nothing, like cigarette smoke. They are held up by small clear bricks, and the site tells you when it adds them.</p></details>
+      <details><summary>Is this official?</summary><p>No. Punk to Bricks is an unofficial fan project, not affiliated with the LEGO Group or the CryptoPunks project.</p></details>
     </section>
   </main>
 
