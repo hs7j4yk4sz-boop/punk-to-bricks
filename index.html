@@ -119,9 +119,20 @@
       <ol class="steps3">
         <li><span class="n">1</span><span class="t"><b>Download your LEGO list</b><small id="pab-note"></small></span><button id="dl-pab" class="btn">⬇ CSV</button></li>
         <li><span class="n">2</span><span class="t"><b>Upload it on Pick a Brick</b><small>“Upload List” button, then check your bag</small></span><a class="btn light" href="https://www.lego.com/pick-and-build/pick-a-brick" target="_blank" rel="noopener">Open ↗</a></li>
-        <li><span class="n">3</span><span class="t"><b>Missing pieces? BrickLink</b><small id="rest-note">For parts LEGO doesn’t have in stock</small></span><span class="btns"><button id="dl-xml-rest" class="btn light" hidden>⬇ Missing</button><button id="dl-xml" class="btn light">⬇ XML</button></span></li>
+        <li class="bl-step"><span class="n">3</span>
+          <div class="t"><b>Buy the rest on BrickLink</b>
+            <small>BrickLink is a marketplace of independent shops selling single pieces, including the ones LEGO doesn’t sell or has out of stock.</small>
+            <ol class="how-bl">
+              <li>Copy a list below.</li>
+              <li>On BrickLink, sign in (with a LEGO account) and open <a href="https://www.bricklink.com/v2/wanted/upload.page" target="_blank" rel="noopener">Want → Upload</a>. Choose “Upload BrickLink XML format” and paste.</li>
+              <li>Open the new wanted list and use “Buy All” to find shops that have the pieces.</li>
+            </ol>
+            <div class="bl-row" id="bl-missing-row"><span><b>Only missing pieces</b><small id="rest-note"></small></span><span class="btns"><button id="copy-xml-rest" class="btn">Copy</button><button id="dl-xml-rest" class="btn light" aria-label="Download only missing pieces">⬇</button></span></div>
+            <div class="bl-row"><span><b>All pieces</b><small id="all-note"></small></span><span class="btns"><button id="copy-xml" class="btn light">Copy</button><button id="dl-xml" class="btn light" aria-label="Download all pieces">⬇</button></span></div>
+          </div>
+        </li>
       </ol>
-      <p class="fine">Uploading a list isn’t available in every country: check <a href="https://www.lego.com/pick-and-build/pick-a-brick" target="_blank" rel="noopener">Pick a Brick</a> for yours. LEGO lists any piece it couldn’t add: get those on BrickLink (Want → Upload).</p>
+      <p class="fine">Uploading a list isn’t available in every country: check <a href="https://www.lego.com/pick-and-build/pick-a-brick" target="_blank" rel="noopener">Pick a Brick</a> for yours. LEGO lists any piece it couldn’t add: get those on BrickLink.</p>
     </div>
   </dialog>
   <dialog id="before-order" aria-labelledby="bo-title">

@@ -172,10 +172,9 @@ function renderOrder(m: Model) {
   $('pab-note').textContent = `${files > 1 ? `${files} files (400 references each at most)` : '1 file'} · ${lots(s.lego.length)} · ${s.legoPieces.toLocaleString('en')} pieces`;
   $('dl-pab').textContent = files > 1 ? `⬇ ${files} CSV` : '⬇ CSV';
   $<HTMLButtonElement>('dl-pab').disabled = files === 0;
-  $('dl-xml-rest').hidden = s.brickLinkOnly.length === 0 || s.lego.length === 0;
-  $('rest-note').textContent = s.brickLinkOnly.length
-    ? `${lots(s.brickLinkOnly.length)} (${s.brickLinkOnlyPieces.toLocaleString('en')} pieces) LEGO doesn’t sell, or anything out of stock`
-    : 'For anything LEGO has out of stock: the full list, Want → Upload';
+  $('bl-missing-row').hidden = s.brickLinkOnly.length === 0;
+  $('rest-note').textContent = `${lots(s.brickLinkOnly.length)} · ${s.brickLinkOnlyPieces.toLocaleString('en')} pieces LEGO doesn’t sell`;
+  $('all-note').textContent = `${lots(m.bom.length)} · ${m.checks.pieces.toLocaleString('en')} pieces · if you’d rather buy everything there`;
   const base = models.get(`${size}|false`);
   $('prefer-note').textContent = preferLego
     ? `Done: every check ran again (${m.checks.floating} floating, ${m.checks.collisions} collisions)${base ? `, ${m.checks.pieces - base.checks.pieces >= 0 ? '+' : ''}${m.checks.pieces - base.checks.pieces} pieces` : ''}.`
@@ -201,6 +200,14 @@ $('dl-pab').addEventListener('click', () => orderDownload(m => {
   files.forEach((f, i) => setTimeout(() => save(new Blob([f], { type: 'text/csv' }), `${baseName()}-pick-a-brick${files.length > 1 ? `-${i + 1}-of-${files.length}` : ''}.csv`), i * 400));
 }));
 $('dl-xml').addEventListener('click', () => orderDownload(m => save(new Blob([brickLinkXML(m)], { type: 'application/xml' }), `${baseName()}-bricklink.xml`)));
+async function copyList(button: HTMLElement, text: string) {
+  const label = button.textContent;
+  try { await navigator.clipboard.writeText(text); button.textContent = 'Copied ✓'; }
+  catch { button.textContent = 'Use ⬇ instead'; }
+  setTimeout(() => { button.textContent = label; }, 1800);
+}
+$('copy-xml').addEventListener('click', () => orderDownload(m => copyList($('copy-xml'), brickLinkXML(m))));
+$('copy-xml-rest').addEventListener('click', () => orderDownload(m => copyList($('copy-xml-rest'), brickLinkRemainderXML(m))));
 $('dl-xml-rest').addEventListener('click', () => orderDownload(m => save(new Blob([brickLinkRemainderXML(m)], { type: 'application/xml' }), `${baseName()}-bricklink-not-at-lego.xml`)));
 $('prefer-lego').addEventListener('change', e => {
   preferLego = (e.target as HTMLInputElement).checked;
