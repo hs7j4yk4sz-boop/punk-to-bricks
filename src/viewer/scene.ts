@@ -2,7 +2,7 @@
 import * as THREE from 'three';
 import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
 import type { Model } from '../core/build';
-import { COLOR_BY_ID } from '../core/palette';
+import { COLOR_BY_ID, renderHex } from '../core/palette';
 import { geoKey, pieceGeometry } from './geometry';
 import { buildCamera, makeTimeline, pieceState, PL, type Timeline } from './timeline';
 
@@ -93,8 +93,8 @@ export class Viewer {
       if (!mm) {
         const col = COLOR_BY_ID.get(c)!;
         mm = col.trans
-          ? new THREE.MeshPhysicalMaterial({ color: col.hex, roughness: 0.05, transparent: true, opacity: c === 12 ? 0.35 : 0.8, depthWrite: c !== 12 })
-          : new THREE.MeshStandardMaterial({ color: col.hex, roughness: 0.32, metalness: 0 });
+          ? new THREE.MeshPhysicalMaterial({ color: renderHex(c), roughness: 0.05, transparent: true, opacity: c === 12 ? 0.35 : 0.8, depthWrite: c !== 12 })
+          : new THREE.MeshStandardMaterial({ color: renderHex(c), roughness: 0.32, metalness: 0 });
         mats.set(c, mm);
       }
       return mm;
@@ -112,7 +112,7 @@ export class Viewer {
     }
     // motion-trail ghosts, one instanced box per colour and trail step
     for (const c of new Set(m.pieces.map(p => p.c))) {
-      const hex = COLOR_BY_ID.get(c)!.hex;
+      const hex = renderHex(c);
       this.ghosts.set(c, GHOST_ALPHA.map(o => {
         const g = new THREE.InstancedMesh(new THREE.BoxGeometry(1, 1, 1), new THREE.MeshBasicMaterial({ color: hex, transparent: true, opacity: o, depthWrite: false }), MAX_GHOSTS);
         g.count = 0; g.frustumCulled = false; this.root.add(g); return g;

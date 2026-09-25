@@ -5,7 +5,8 @@ import { deltaE, hexToRgb, rgbToLab, type Lab, type RGB } from './color';
 export interface BrickColor {
   id: number;          // BrickLink colour ID
   name: string;        // BrickLink colour name
-  hex: string;         // display colour
+  hex: string;         // BrickLink colour value, used for matching
+  render?: string;     // how the real brick looks on screen, if different
   trans?: boolean;
 }
 
@@ -33,7 +34,7 @@ export const BRICK_COLORS: BrickColor[] = [
   { id: 80, name: 'Dark Green', hex: '#184632' },
   { id: 155, name: 'Olive Green', hex: '#9B9A5A' },
   { id: 48, name: 'Sand Green', hex: '#A0BCAC' },
-  { id: 152, name: 'Light Aqua', hex: '#ADC3C0' },
+  { id: 152, name: 'Light Aqua', hex: '#ADC3C0', render: '#C9EDE6' },
   { id: 156, name: 'Medium Azure', hex: '#36AEBF' },
   { id: 105, name: 'Bright Light Blue', hex: '#9FC3E9' },
   { id: 7, name: 'Blue', hex: '#0055BF' },
@@ -109,3 +110,6 @@ export function mapColors(colors: PunkColor[], touching: Set<string>): number[] 
   }
   return ranked.map((r, i) => r[pick[i]].id);
 }
+
+/** Colour to draw a brick with (3D view, instructions). */
+export const renderHex = (id: number) => { const c = COLOR_BY_ID.get(id)!; return c.render ?? c.hex; };
