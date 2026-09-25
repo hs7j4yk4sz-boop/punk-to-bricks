@@ -31,7 +31,9 @@ export interface SizeSpec {
 export const SIZES_SPEC: Record<SizeId, SizeSpec> = {
   mini: {
     id: 'mini', sx: 1, D: 8, front: 2, taper: [2, 1], slab: 4, frontSlab: 3, wall: 1, chamfer: 1,
-    rowLayers: [{ kind: 'brick', h: 3 }], baseLayers: [{ kind: 'plate', h: 1 }, { kind: 'plate', h: 1 }],
+    // rows alternate 1 brick (3 plates) and 2 plates: 2.5 plates = 8 mm on average, like a stud: square pixels
+    rowLayers: [{ kind: 'brick', h: 3 }], rowLayersAlt: [{ kind: 'plate', h: 1 }, { kind: 'plate', h: 1 }],
+    baseLayers: [{ kind: 'plate', h: 1 }, { kind: 'plate', h: 1 }],
     baseMargin: { side: 1, front: 2, back: 1 }, cantilever: 6, slopes: false, nameplate: [4, 1],
   },
   xl: {

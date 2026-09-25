@@ -54,7 +54,7 @@ describe('every test Punk builds solid', () => {
       expect(m.checks.floating, m.notes.join(' ')).toBe(0);
       expect(m.checks.collisions).toBe(0);
       expect(m.checks.com.inside).toBe(true);
-      if (size === 'mini') expect(m.checks.pieces).toBeLessThanOrEqual(320);
+      if (size === 'mini') expect(m.checks.pieces).toBeLessThanOrEqual(450);
       // every piece is a real part in a real colour, every step is non-empty
       expect(m.pieces.every(q => q.part && q.c > 0)).toBe(true);
       expect(m.steps.flat().sort((a, b) => a - b)).toEqual(m.pieces.map((_, i) => i));
