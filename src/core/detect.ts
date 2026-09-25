@@ -87,7 +87,7 @@ function sample(img: RGBAImage, x0: number, y0: number, size: number, _bg: RGB |
   const s = size / N, d = img.data;
   if (s < 1) throw new DetectError('not-grid', 'This image is too small: a Punk needs at least 24×24 pixels.');
   const raw: (RGB | null)[][] = [];
-  let uni = 0;
+  let uni = 0, mixed = 0;
   for (let r = 0; r < N; r++) {
     const row: (RGB | null)[] = [];
     for (let c = 0; c < N; c++) {
@@ -102,11 +102,16 @@ function sample(img: RGBAImage, x0: number, y0: number, size: number, _bg: RGB |
       const solid = pts.filter((p): p is RGB => p !== null);
       if (solid.length * 2 < pts.length) { row.push(null); uni += (pts.length - solid.length) / pts.length; continue; }
       const med: RGB = [0, 1, 2].map(k => solid.map(p => p[k]).sort((a, b) => a - b)[solid.length >> 1]) as RGB;
-      uni += solid.filter(p => rgbDist(p, med) <= 36).length / pts.length;
+      const u = solid.filter(p => rgbDist(p, med) <= 36).length / pts.length;
+      uni += u;
+      if (u < 0.7) mixed++;
       row.push(med);
     }
     raw.push(row);
   }
+  // A real Punk cell is one flat colour. Many mixed cells means this "grid"
+  // is something else, e.g. a picture of several Punks side by side.
+  if (mixed > 12) throw new DetectError('not-grid', "This image seems to show several Punks, or more than one Punk. Crop it so only your Punk and its background are visible.");
   if (uni / (N * N) < 0.8) throw new DetectError('not-grid', "We found a square, but it doesn't look like a clean 24×24 pixel grid. The image may be blurry, cropped or rotated. Try the original Punk image.");
 
   // Background: the colour of the top-left cell (Punks never touch it).

@@ -2,7 +2,7 @@
 import { writeFileSync } from 'node:fs';
 import { buildModel } from '../src/core/build';
 import { detectPunk } from '../src/core/detect';
-import { REFERENCE_PUNK, TEST_PUNKS } from '../src/examples/punks';
+import { REFERENCE_PUNK, TEST_PUNKS } from '../test/fixtures/punks';
 import { punkImage, toPNG } from '../test/img';
 const B = { kind: 'brick' as const, h: 3 }, P = { kind: 'plate' as const, h: 1 };
 const opts: [string, object][] = [['A · 1 brick per pixel', { rowLayers: [B] }], ['B · 2 plates per pixel', { rowLayers: [P, P] }], ['C · brick / 2 plates, alternating', { rowLayers: [B], rowLayersAlt: [P, P] }]];

@@ -30,7 +30,7 @@ npm test           # unit tests (detection, solidity, exports, all example Punks
 npm run build      # static site in dist/
 ```
 
-Tests on the 10,000 real CryptoPunks run only if you put the official `punks.png` (from [larvalabs/cryptopunks](https://github.com/larvalabs/cryptopunks)) in `real/`. That folder is git-ignored: the real Punk images are not part of this repository. The example Punks on the site are original drawings, plus the author's own Punk.
+Tests on the 10,000 real CryptoPunks run only if you put the official `punks.png` (from [larvalabs/cryptopunks](https://github.com/larvalabs/cryptopunks)) in `real/`. That folder is git-ignored: the real Punk images are not part of this repository. The example Punks on the site are real Punks used with their owners' permission (public/examples). The drawings in test/fixtures are only used by the tests.
 
 ## Notes
 

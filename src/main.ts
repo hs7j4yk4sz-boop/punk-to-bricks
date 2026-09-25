@@ -1,7 +1,6 @@
 import type { Model, SizeId } from './core/build';
-import { hexToRgb, rgbToHex } from './core/color';
+import { rgbToHex } from './core/color';
 import type { PunkGrid, RGBAImage } from './core/detect';
-import { REFERENCE_PUNK, TEST_PUNKS, type TestPunk } from './examples/punks';
 import { Viewer } from './viewer/scene';
 import { brickLinkXML, partsCSV } from './export/parts';
 import type { BuildReply, BuildRequest } from './worker/build.worker';
@@ -33,10 +32,10 @@ async function fileToImage(blob: Blob): Promise<RGBAImage> {
   const d = x.getImageData(0, 0, w, h);
   return { width: w, height: h, data: d.data };
 }
-function punkToImage(p: TestPunk): RGBAImage {
-  const data = new Uint8ClampedArray(24 * 24 * 4);
-  p.rows.forEach((row, r) => [...row].forEach((ch, c) => { data.set([...hexToRgb(p.palette[ch]), 255], (r * 24 + c) * 4); }));
-  return { width: 24, height: 24, data };
+/** An example Punk from public/examples (real Punks, used with permission). */
+async function exampleImage(file: string): Promise<RGBAImage> {
+  const res = await fetch(`./examples/${file}`);
+  return fileToImage(await res.blob());
 }
 
 async function start(image: RGBAImage) {
@@ -171,15 +170,17 @@ function shareLink() {
 $('share-x').addEventListener('pointerdown', shareLink);
 $('share-x').addEventListener('focus', shareLink);
 
-const examples = [REFERENCE_PUNK, ...TEST_PUNKS.filter(p => ['cap', 'long-hair-woman', 'pipe', 'hoodie', 'alien-cap', 'ape-beanie', 'zombie', 'cowboy-hat', 'mohawk', 'vr'].includes(p.name))];
-for (const p of examples) {
+const examples = [
+  { file: 'reference.png', title: 'The original bust' },
+  ...['a-1', 'b-1', 'b-2', 'b-3', 'b-4', 'b-5', 'b-6', 'c-1', 'c-2', 'c-3', 'c-4', 'c-5', 'c-6', 'c-7', 'c-8', 'c-9'].map(n => ({ file: `${n}.png`, title: 'Example Punk' })),
+];
+for (const ex of examples) {
   const b = document.createElement('button');
-  b.title = p.name === 'reference' ? 'The original brick bust' : p.name.replace(/-/g, ' ');
-  const c = document.createElement('canvas'); c.width = c.height = 24;
-  const img = punkToImage(p);
-  c.getContext('2d')!.putImageData(new ImageData(new Uint8ClampedArray(img.data), 24, 24), 0, 0);
-  b.append(c);
-  b.addEventListener('click', () => start(punkToImage(p)));
+  b.title = ex.title;
+  const img = document.createElement('img');
+  img.src = `./examples/${ex.file}`; img.alt = ex.title; img.width = img.height = 24;
+  b.append(img);
+  b.addEventListener('click', () => exampleImage(ex.file).then(start, () => showError('We couldn’t load this example.')));
   $('examples').append(b);
 }
 setSize(size);
@@ -187,5 +188,5 @@ setSize(size);
 // dev/test hook: lets scripts drive the viewer frame by frame
 if (import.meta.env.DEV) {
   Promise.all([import('./core/detect'), import('./core/build')]).then(([d, b]) =>
-    Object.assign(window, { ptb: { viewer, start, punkToImage, examples, setSize, build, detectPunk: d.detectPunk, buildModel: b.buildModel, fileToImage } }));
+    Object.assign(window, { ptb: { viewer, start, exampleImage, examples, setSize, build, detectPunk: d.detectPunk, buildModel: b.buildModel, fileToImage } }));
 }

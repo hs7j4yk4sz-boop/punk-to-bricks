@@ -10,7 +10,7 @@ const fs = require('fs');
   const shots = {};
   for (const size of ['xl', 'mini']) {
     shots[size] = await p.evaluate(async size => {
-      await ptb.setSize(size); await ptb.start(ptb.punkToImage(ptb.examples[0]));
+      await ptb.setSize(size); await ptb.start(await ptb.exampleImage(ptb.examples[0].file));
       const v = ptb.viewer; v.skip(); v.controls.autoRotate = false;
       v.pose(v.tl.end); v.setBuildCamera(v.tl.end); v.render();
       return v.renderer.domElement.toDataURL('image/jpeg', 0.9);

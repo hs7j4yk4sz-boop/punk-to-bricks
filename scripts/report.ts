@@ -1,7 +1,7 @@
 // Build every test Punk and print the checks.
 import { buildModel, type SizeId } from '../src/core/build';
 import { detectPunk } from '../src/core/detect';
-import { REFERENCE_PUNK, TEST_PUNKS } from '../src/examples/punks';
+import { REFERENCE_PUNK, TEST_PUNKS } from '../test/fixtures/punks';
 import { punkImage } from '../test/img';
 
 const sizes = (process.argv[2] ?? 'mini,xl').split(',') as SizeId[];

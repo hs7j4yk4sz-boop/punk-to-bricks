@@ -3,7 +3,7 @@ import { buildModel } from '../src/core/build';
 import { checkModel } from '../src/core/check';
 import { detectPunk } from '../src/core/detect';
 import { partId, type Kind, type Piece } from '../src/core/parts';
-import { REFERENCE_PUNK, TEST_PUNKS } from '../src/examples/punks';
+import { REFERENCE_PUNK, TEST_PUNKS } from './fixtures/punks';
 import { punkImage } from './img';
 
 const P = (x: number, z: number, y: number, w: number, d: number, kind: Kind = 'brick', h = kind === 'brick' ? 3 : 1): Piece =>

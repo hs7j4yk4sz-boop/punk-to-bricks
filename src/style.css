@@ -47,7 +47,7 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 32px; }
 .example-row { display: flex; flex-wrap: wrap; gap: 6px; }
 .example-row button { padding: 0; border: 1px solid var(--line); border-radius: 8px; background: none; overflow: hidden; width: 44px; height: 44px; }
 .example-row button:hover, .example-row button:focus-visible { border-color: var(--accent); outline: none; }
-.example-row canvas { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
+.example-row img { width: 100%; height: 100%; image-rendering: pixelated; display: block; }
 .error { margin: 14px 0 0; padding: 12px 14px; border-radius: 10px; background: color-mix(in srgb, var(--bad) 12%, transparent); color: var(--bad); font-weight: 600; }
 
 .result { margin-top: 16px; padding: 12px; }

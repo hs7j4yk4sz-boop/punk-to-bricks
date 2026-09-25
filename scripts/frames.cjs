@@ -7,7 +7,7 @@ const { exe } = require('./shot.cjs');
   const p = await b.newPage({ viewport: { width: 900, height: 1200 } });
   p.on('pageerror', e => console.log('ERR', e.message));
   await p.goto('http://localhost:5178/');
-  await p.evaluate(async ([i, s]) => { await ptb.setSize(s); await ptb.start(ptb.punkToImage(ptb.examples[+i])); }, [example, size]);
+  await p.evaluate(async ([i, s]) => { await ptb.setSize(s); await ptb.start(await ptb.exampleImage(ptb.examples[+i].file)); }, [example, size]);
   await p.waitForFunction(() => ptb.viewer.model !== null, null, { timeout: 60000 });
   const times = await p.evaluate(() => { const tl = ptb.viewer.tl; return [1.2, 3.5, 6, 8.5, 11.2, tl.capDown[0] + 0.8, tl.hero + 0.3, tl.end]; });
   const shots = [];

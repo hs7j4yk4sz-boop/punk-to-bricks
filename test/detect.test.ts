@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { detectPunk, DetectError, type PunkGrid, type RGBAImage } from '../src/core/detect';
-import { REFERENCE_PUNK, TEST_PUNKS, type TestPunk } from '../src/examples/punks';
+import { REFERENCE_PUNK, TEST_PUNKS, type TestPunk } from './fixtures/punks';
 import { blank, load, punkImage, resize, screenshot, toJPEG } from './img';
 import jpeg from 'jpeg-js';
 import { deltaE, hexToRgb, rgbToLab } from '../src/core/color';
