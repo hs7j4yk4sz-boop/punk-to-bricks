@@ -12,15 +12,14 @@ Turn your CryptoPunk into a brick bust you can really build.
 ## How to use
 
 1. **Type your Punk number** (0 to 9999), or **drop its image**: the original PNG, a marketplace download or a phone screenshot. No Punk at hand? Click one of the examples.
-2. **Watch it build** in 3D, pick **Mini** (about 400 pieces) or **XL** (about 1,250 pieces), then turn it with your finger or mouse.
-3. Read the key figures at a glance: **pieces, steps, lots to buy, size**. "More info" shows every check (studs connected, 0 floating, 0 collisions, balance).
-4. **Download full kit**: one ZIP with the step-by-step instructions (PDF) and the parts list.
-5. **Order the bricks**: a LEGO Pick a Brick upload file and a BrickLink wanted list (copy or download), each shown as "x of total" lots and pieces. "Only parts LEGO sells" rebuilds your bust with parts LEGO sells and runs every check again.
-6. **Download a video** of the build (square or 9:16, with brick clicks) and share it.
+2. **① Your bust**: watch it build in 3D, pick **Mini** (about 400 pieces) or **XL** (about 1,250 pieces), turn it with your finger or mouse. The key figures are big: pieces, steps, lots to buy, size; "More info" shows every check. Download a video of the build (square or 9:16).
+3. **② Instructions**: flip through the step-by-step booklet right on the page, then download it as a PDF or as a full kit (PDF + parts list).
+4. **③ Buy the bricks**: see your shopping list (every part, its quantity, red if LEGO sells it, blue if only BrickLink has it), then **Buy at LEGO** (a Pick a Brick upload file) or **Buy on BrickLink** (a wanted list to paste). "Only parts LEGO sells" rebuilds your bust with parts LEGO sells and runs every check again.
 
 <p align="center">
-  <img src="docs/result.png" alt="Result: the bust in 3D, key figures, Download full kit and Order the bricks" width="640">
-  <img src="docs/order.png" alt="Order the bricks: LEGO Pick a Brick and BrickLink, step by step" width="640">
+  <img src="docs/bust.png" alt="① Your bust: the 3D bust and its key figures" width="640">
+  <img src="docs/instructions.png" alt="② Instructions: the booklet on the page" width="640">
+  <img src="docs/buy.png" alt="③ Buy the bricks: shopping list, Buy at LEGO, Buy on BrickLink" width="640">
 </p>
 
 ## What's inside
