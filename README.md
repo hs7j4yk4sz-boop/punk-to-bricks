@@ -1,16 +1,35 @@
 # Punk to Bricks
 
-Turn a CryptoPunk image into a brick bust you can really build: a 3D build animation, step-by-step PDF instructions, a parts list and a BrickLink wanted list.
+Turn your CryptoPunk into a brick bust you can really build.
 
-**Live site:** https://hs7j4yk4sz-boop.github.io/punk-to-bricks/
+<p align="center">
+  <a href="https://hs7j4yk4sz-boop.github.io/punk-to-bricks/"><img src="public/og.png" alt="Punk to Bricks: turn your Punk into a brick bust you can really build" width="720"></a>
+</p>
 
-![Punk to Bricks](public/og.png)
+<h3 align="center">👉 <a href="https://hs7j4yk4sz-boop.github.io/punk-to-bricks/">Open Punk to Bricks</a> 👈</h3>
+<p align="center">Free · runs in your browser · your image never leaves your device</p>
 
-- **100% static.** Everything runs in the visitor's browser (a Web Worker does the heavy lifting). No server, no AI, no API key. The image never leaves the browser.
-- **Two sizes.** Mini: 1 pixel = 1 stud, rows alternate one brick and two plates so pixels stay square (about 400 pieces). XL: 1 pixel = 2×2 studs, 5 plates tall, hollow with 2-stud walls (about 1,250 pieces).
-- **Honest checks.** Every model is checked on its final piece list: studs connected, 0 floating pieces, 0 collisions, centre of mass over the base, weak joints. A failed check is shown, never hidden.
-- **Order the bricks.** A Pick a Brick upload file (LEGO's own CSV format: 400 references and 999 units per line at most, split into several files when needed) and a BrickLink wanted list, with a summary of what LEGO sells. "Prefer parts available at LEGO" rebuilds the model with parts LEGO sells and runs every check again. Element IDs come from [Rebrickable](https://rebrickable.com)'s free exports, built into `src/data/elements.json` by `scripts/build-elements.ts` (no live calls). Nothing is sold or tracked here.
-- **Exports.** PDF booklet (one page per layer, the step's parts in colour with a yellow outline, parts inventory), CSV parts list, BrickLink XML (Want → Upload), and a square or 9:16 video of the build with brick clicks made in Web Audio.
+## How to use
+
+1. **Drop your Punk** on the site: the original PNG, a marketplace download or a phone screenshot. No Punk at hand? Click one of the examples.
+2. **Watch it build** in 3D, pick **Mini** (about 400 pieces) or **XL** (about 1,250 pieces), then turn it with your finger or mouse.
+3. Read the key figures at a glance: **pieces, steps, lots to buy, size**. "More info" shows every check (studs connected, 0 floating, 0 collisions, balance).
+4. **Download full kit**: one ZIP with the step-by-step instructions (PDF) and the parts list.
+5. **Order the bricks**: a LEGO Pick a Brick upload file and a BrickLink wanted list (copy or download), each shown as "x of total" lots and pieces. "Only parts LEGO sells" rebuilds your bust with parts LEGO sells and runs every check again.
+6. **Download a video** of the build (square or 9:16, with brick clicks) and share it.
+
+<p align="center">
+  <img src="docs/result.png" alt="Result: the bust in 3D, key figures, Download full kit and Order the bricks" width="640">
+  <img src="docs/order.png" alt="Order the bricks: LEGO Pick a Brick and BrickLink, step by step" width="640">
+</p>
+
+## What's inside
+
+- **100% static.** Everything runs in the visitor's browser (a Web Worker does the heavy lifting). No server, no AI, no API key, no tracking.
+- **Two sizes.** Mini: 1 pixel = 1 stud, rows alternate one brick and two plates so pixels stay square. XL: 1 pixel = 2×2 studs, 5 plates tall, hollow with 2-stud walls.
+- **Honest checks.** Every model is checked on its final piece list: studs connected, 0 floating pieces, 0 collisions, centre of mass over the base, weak joints. A failed check is shown, never hidden. Tested on all 10,000 CryptoPunks, in both sizes.
+- **Order the bricks.** A Pick a Brick upload file in LEGO's own CSV format (400 references and 999 units per line at most, split into several files when needed) and a BrickLink wanted list (Want → Upload → "Upload BrickLink XML format"). Element IDs come from [Rebrickable](https://rebrickable.com)'s free exports, built into `src/data/elements.json` by `scripts/build-elements.ts` (no live calls). Nothing is sold here: you order and pay on LEGO or BrickLink.
+- **Exports.** Full kit ZIP (PDF booklet, one page per layer with the step's parts in colour and outlined in yellow, plus parts inventory; CSV parts list), and square or 9:16 videos of the build ending on the flipping booklet, with brick clicks made in Web Audio.
 
 Inspired by [@victormustar](https://x.com/victormustar)'s Microduck and by [my own CryptoPunk bust](https://github.com/hs7j4yk4sz-boop/cryptopunk-brick-bust).
 
