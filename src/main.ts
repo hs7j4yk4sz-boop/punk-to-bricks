@@ -169,12 +169,14 @@ function renderOrder(m: Model) {
   $('leg-bl').textContent = lots(s.brickLinkOnly.length);
   $('order-chip').textContent = `${s.lego.length} of ${all} lots at LEGO`;
   const files = pickABrickFiles(m).length;
-  $('pab-note').textContent = `${files > 1 ? `${files} files (400 references each at most)` : '1 file'} · ${lots(s.lego.length)} · ${s.legoPieces.toLocaleString('en')} pieces`;
+  // always "x of total", so each list reads at a glance
+  const totalLots = m.bom.length, totalPcs = m.checks.pieces.toLocaleString('en');
+  $('pab-note').textContent = `${files > 1 ? `${files} files · ` : ''}${s.lego.length} of ${totalLots} lots · ${s.legoPieces.toLocaleString('en')} of ${totalPcs} pieces`;
   $('dl-pab').textContent = files > 1 ? `⬇ ${files} CSV` : '⬇ CSV';
   $<HTMLButtonElement>('dl-pab').disabled = files === 0;
   $('bl-missing-row').hidden = s.brickLinkOnly.length === 0;
-  $('rest-note').textContent = `${lots(s.brickLinkOnly.length)} · ${s.brickLinkOnlyPieces.toLocaleString('en')} pieces LEGO doesn’t sell`;
-  $('all-note').textContent = `${lots(m.bom.length)} · ${m.checks.pieces.toLocaleString('en')} pieces · if you’d rather buy everything there`;
+  $('rest-note').textContent = `${s.brickLinkOnly.length} of ${totalLots} lots · ${s.brickLinkOnlyPieces.toLocaleString('en')} of ${totalPcs} pieces · LEGO doesn’t sell them`;
+  $('all-note').textContent = `${totalLots} of ${totalLots} lots · ${totalPcs} of ${totalPcs} pieces · to buy everything there`;
   const base = models.get(`${size}|false`);
   $('prefer-note').textContent = preferLego
     ? `Done: every check ran again (${m.checks.floating} floating, ${m.checks.collisions} collisions)${base ? `, ${m.checks.pieces - base.checks.pieces >= 0 ? '+' : ''}${m.checks.pieces - base.checks.pieces} pieces` : ''}.`
