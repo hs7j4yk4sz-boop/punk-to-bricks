@@ -97,7 +97,6 @@ function renderChecks(m: Model, ms: number) {
   const c = m.checks;
   const li = (cls: string, big: string, small: string) => `<li class="${cls}"><b>${big}</b>${small}</li>`;
   $('checks').innerHTML = [
-    li('ok', `${c.pieces.toLocaleString('en')} pieces`, `${m.bom.length} lots · ${m.steps.length} steps · about ${m.dims[0]} × ${m.dims[1]} × ${m.dims[2]} cm`),
     li('ok', `${c.connections.toLocaleString('en')} studs`, 'connected between pieces'),
     c.collisions === 0 ? li('ok', '0 collisions', 'no two pieces overlap') : li('bad', `${c.collisions} collisions`, 'some pieces overlap: this model can’t be built as is'),
     c.floating === 0 ? li('ok', '0 floating', 'every piece is attached to the base') : li('bad', `${c.floating} floating`, 'pieces not attached to the base: this model can’t be built as is'),
@@ -105,6 +104,15 @@ function renderChecks(m: Model, ms: number) {
     c.weak === 0 ? li('ok', '0 weak joints', 'no piece hangs on a single stud') : li('warn', `${c.weak} weak joint${c.weak > 1 ? 's' : ''}`, 'held by a single stud: fine for display, handle gently'),
   ].join('');
   $('notes').innerHTML = [...m.notes, `Computed in your browser${ms ? ` in ${(ms / 1000).toFixed(1)} s` : ''}. Computer-checked, not physically build-tested.`].map(n => `<li>${n}</li>`).join('');
+  // the key figures, big; the rest folds under "More info"
+  const stat = (v: string, l: string) => `<div class="stat"><b>${v}</b><span>${l}</span></div>`;
+  $('stats').innerHTML = stat(c.pieces.toLocaleString('en'), 'pieces') + stat(String(m.steps.length), 'steps')
+    + stat(String(m.bom.length), 'lots to buy') + stat(`${m.dims[0]}×${m.dims[1]}×${m.dims[2]}`, 'cm');
+  const solid = c.floating === 0 && c.collisions === 0 && c.com.inside;
+  const pill = $('pill');
+  pill.className = solid ? 'pill' : 'pill bad';
+  pill.textContent = solid ? '✓ Checked: solid' : '✗ Check failed';
+  $('status-short').textContent = `${c.floating} floating · ${c.collisions} collisions · ${c.com.inside ? 'balanced' : 'will tip over'}`;
 }
 
 // ---------- wiring ----------
@@ -145,23 +153,33 @@ let exporting = false;
 async function run(label: string, job: () => Promise<void>) {
   if (exporting || !current()) return;
   exporting = true;
-  document.querySelectorAll<HTMLButtonElement>('.dl button').forEach(b => { b.disabled = true; });
+  document.querySelectorAll<HTMLButtonElement>('.act, .mini-btn').forEach(b => { b.disabled = true; });
   try { await job(); progress(null); }
   catch (e) { progress(`${label} failed: ${(e as Error).message}`, 0); }
-  finally { exporting = false; document.querySelectorAll<HTMLButtonElement>('.dl button').forEach(b => { b.disabled = false; }); }
+  finally { exporting = false; document.querySelectorAll<HTMLButtonElement>('.act, .mini-btn').forEach(b => { b.disabled = false; }); }
 }
-$('dl-csv').addEventListener('click', () => { const m = current(); if (m) save(new Blob([partsCSV(m)], { type: 'text/csv' }), `${baseName()}-parts.csv`); });
 // ---------- ordering ----------
 function renderOrder(m: Model) {
   const s = orderSummary(m);
   const lots = (n: number) => `${n} lot${n === 1 ? '' : 's'}`;
-  $('order-summary').innerHTML = `<span class="lego">${lots(s.lego.length)} available at LEGO Pick a Brick</span> (${s.legoPieces.toLocaleString('en')} pieces), `
-    + `<span class="${s.brickLinkOnly.length ? 'bl' : 'lego'}">${lots(s.brickLinkOnly.length)} only via BrickLink</span>${s.brickLinkOnly.length ? ` (${s.brickLinkOnlyPieces.toLocaleString('en')} pieces)` : ''}.`;
+  const all = s.lego.length + s.brickLinkOnly.length || 1;
+  $('bar-lego').style.width = `${(100 * s.lego.length) / all}%`;
+  $('bar-bl').style.width = `${(100 * s.brickLinkOnly.length) / all}%`;
+  $('leg-lego').textContent = lots(s.lego.length);
+  $('leg-bl').textContent = lots(s.brickLinkOnly.length);
+  $('order-chip').textContent = `${s.lego.length} of ${all} lots at LEGO`;
   const files = pickABrickFiles(m).length;
-  $('pab-note').textContent = files > 1 ? `CSV · ${files} files (Pick a Brick takes 400 references per list)` : 'CSV · for LEGO Pick a Brick “Upload List”';
+  $('pab-note').textContent = `${files > 1 ? `${files} files (400 references each at most)` : '1 file'} · ${lots(s.lego.length)} · ${s.legoPieces.toLocaleString('en')} pieces`;
+  $('dl-pab').textContent = files > 1 ? `⬇ ${files} CSV` : '⬇ CSV';
   $<HTMLButtonElement>('dl-pab').disabled = files === 0;
   $('dl-xml-rest').hidden = s.brickLinkOnly.length === 0 || s.lego.length === 0;
-  $('rest-note').textContent = `XML · only the ${lots(s.brickLinkOnly.length)} not at LEGO`;
+  $('rest-note').textContent = s.brickLinkOnly.length
+    ? `${lots(s.brickLinkOnly.length)} (${s.brickLinkOnlyPieces.toLocaleString('en')} pieces) LEGO doesn’t sell, or anything out of stock`
+    : 'For anything LEGO has out of stock: the full list, Want → Upload';
+  const base = models.get(`${size}|false`);
+  $('prefer-note').textContent = preferLego
+    ? `Done: every check ran again (${m.checks.floating} floating, ${m.checks.collisions} collisions)${base ? `, ${m.checks.pieces - base.checks.pieces >= 0 ? '+' : ''}${m.checks.pieces - base.checks.pieces} pieces` : ''}.`
+    : 'Rebuilds your bust with smaller pieces where needed. Every check runs again.';
   $<HTMLInputElement>('prefer-lego').checked = preferLego;
 }
 /** The "Before you order" notice, once per visit, before the first order file. */
@@ -184,12 +202,25 @@ $('dl-pab').addEventListener('click', () => orderDownload(m => {
 }));
 $('dl-xml').addEventListener('click', () => orderDownload(m => save(new Blob([brickLinkXML(m)], { type: 'application/xml' }), `${baseName()}-bricklink.xml`)));
 $('dl-xml-rest').addEventListener('click', () => orderDownload(m => save(new Blob([brickLinkRemainderXML(m)], { type: 'application/xml' }), `${baseName()}-bricklink-not-at-lego.xml`)));
-$('prefer-lego').addEventListener('change', e => { preferLego = (e.target as HTMLInputElement).checked; setSize(size); });
-$('dl-pdf').addEventListener('click', () => run('Instructions', async () => {
-  const { makeInstructions } = await import('./export/pdf');
+$('prefer-lego').addEventListener('change', e => {
+  preferLego = (e.target as HTMLInputElement).checked;
+  $('prefer-note').textContent = 'Rebuilding and checking…';
+  setSize(size);
+});
+$('open-order').addEventListener('click', async () => { if (current() && await beforeOrder()) $<HTMLDialogElement>('order-panel').showModal(); });
+$('op-close').addEventListener('click', () => $<HTMLDialogElement>('order-panel').close());
+$<HTMLDialogElement>('order-panel').addEventListener('click', e => { if (e.target === e.currentTarget) (e.currentTarget as HTMLDialogElement).close(); });
+$('dl-kit').addEventListener('click', () => run('Kit', async () => {
+  const [{ makeInstructions }, { makeZip }] = await Promise.all([import('./export/pdf'), import('./export/zip')]);
+  const m = current()!, name = baseName();
   progress('Drawing the instructions…', 0);
-  const blob = await makeInstructions(current()!, grid!, { label: plateLabel(), renderSize: isPhone ? 800 : 1100, onProgress: (d, t) => progress(`Drawing page ${d} of ${t}…`, d / t) });
-  save(blob, `${baseName()}-instructions.pdf`);
+  const pdf = await makeInstructions(m, grid!, { label: plateLabel(), renderSize: isPhone ? 800 : 1100, onProgress: (d, t) => progress(`Drawing page ${d} of ${t}…`, d / t) });
+  const readme = [`${name} — made with Punk to Bricks`, '', `${m.checks.pieces} pieces · ${m.steps.length} steps · ${m.bom.length} lots · about ${m.dims.join(' × ')} cm`, '',
+    `${name}-instructions.pdf   step-by-step instructions, one page per layer`, `${name}-parts.csv   parts list (BrickLink part and colour numbers)`, '',
+    'To order the bricks, use "Order the bricks" on the site: it makes your LEGO Pick a Brick and BrickLink files.', '',
+    'Models are generated automatically and checked by software only. They have NOT been physically built. Provided "as is", without warranty of any kind.',
+    'Unofficial fan project · Not affiliated with, sponsored or endorsed by the LEGO Group, BrickLink or the CryptoPunks project. LEGO® is a trademark of the LEGO Group. Parts data: Rebrickable.', ''].join('\r\n');
+  save(await makeZip([{ name: `${name}-instructions.pdf`, data: pdf }, { name: `${name}-parts.csv`, data: partsCSV(m) }, { name: 'README.txt', data: readme }]), `${name}-kit.zip`);
 }));
 for (const format of ['square', 'story'] as const) $(format === 'square' ? 'vid-square' : 'vid-story').addEventListener('click', () => run('Video', async () => {
   const { recordVideo } = await import('./export/video');

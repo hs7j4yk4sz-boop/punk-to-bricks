@@ -61,61 +61,35 @@
         <div class="busy" id="busy" hidden><span class="spinner"></span><span id="busy-text">Building…</span></div>
         <p class="hint" id="hint" hidden>Drag to turn · pinch or scroll to zoom</p>
       </div>
-      <div class="info">
-        <div class="read">
-          <canvas id="grid" width="96" height="96" aria-label="The Punk as we read it"></canvas>
-          <div><strong>What we read</strong><br><span id="read-text"></span></div>
-        </div>
-        <ul class="checks" id="checks"></ul>
-        <ul class="notes" id="notes"></ul>
-      </div>
-      <div class="exports">
-        <div>
-          <h2>Build it</h2>
-          <div class="dl">
-            <button id="dl-pdf" class="big">Instructions <small>PDF booklet, one page per layer</small></button>
-            <button id="dl-csv">Parts list <small>CSV</small></button>
+      <div class="stats" id="stats"></div>
+      <details class="more" id="more">
+        <summary><span class="pill" id="pill"></span><span class="status-short" id="status-short"></span><span class="more-link">More info</span></summary>
+        <div class="more-body">
+          <div class="read">
+            <canvas id="grid" width="96" height="96" aria-label="The Punk as we read it"></canvas>
+            <div><strong>What we read</strong><br><span id="read-text"></span></div>
           </div>
+          <ul class="checks" id="checks"></ul>
+          <ul class="notes" id="notes"></ul>
         </div>
-        <div>
-          <h2>Share it</h2>
-          <div class="dl">
-            <button id="vid-square">Video <small>square</small></button>
-            <button id="vid-story">Video <small>9:16 story</small></button>
-            <a id="share-x" class="x" href="#" target="_blank" rel="noopener">Share on X</a>
-          </div>
-          <p class="small">The video is made in your browser and saved to your device: attach it to your post yourself.</p>
-        </div>
-        <div class="order" id="order">
-          <h2>Order the bricks</h2>
-          <p class="order-summary" id="order-summary"></p>
-          <label class="prefer"><input type="checkbox" id="prefer-lego"> <span><b>Prefer parts available at LEGO</b><small>Rebuilds the model with pieces LEGO Pick a Brick sells (bigger pieces it doesn't sell become smaller ones), then runs every check again.</small></span></label>
-          <div class="dl">
-            <button id="dl-pab" class="big">Download Pick a Brick file <small id="pab-note">CSV · for LEGO Pick a Brick “Upload List”</small></button>
-            <button id="dl-xml">BrickLink list <small>XML · all parts · Want → Upload</small></button>
-            <button id="dl-xml-rest" hidden>BrickLink list <small id="rest-note">XML · only the parts not at LEGO</small></button>
-          </div>
-          <ol class="howto">
-            <li>Open <a href="https://www.lego.com/pick-and-build/pick-a-brick" target="_blank" rel="noopener">Pick a Brick</a> on the LEGO website.</li>
-            <li>Click “Upload List” and choose the file you downloaded.</li>
-            <li>Check your bag carefully: LEGO lists any piece it couldn’t add. Get those on BrickLink.</li>
-          </ol>
-          <p class="small">Uploading a list isn’t available in every country: check on <a href="https://www.lego.com/pick-and-build/pick-a-brick" target="_blank" rel="noopener">Pick a Brick</a> for yours. Nothing is ordered from this site: you buy directly from LEGO or from BrickLink sellers.</p>
-        </div>
-        <div class="progress" id="progress" hidden><div class="bar"><i id="bar"></i></div><span id="progress-text"></span></div>
+      </details>
+      <div class="acts">
+        <button id="dl-kit" class="act kit">
+          <span class="ic" aria-hidden="true">⬇</span>
+          <span><b>Download full kit</b><small>One ZIP, ready in a few seconds</small>
+            <span class="chips"><span class="chip">📘 Instructions PDF</span><span class="chip">📋 Parts list</span></span></span>
+        </button>
+        <button id="open-order" class="act order">
+          <span class="ic" aria-hidden="true">🧱</span>
+          <span><b>Order the bricks</b><small>LEGO Pick a Brick or BrickLink</small>
+            <span class="chips"><span class="chip" id="order-chip"></span></span></span>
+        </button>
       </div>
-    </section>
-    <section class="how" id="how">
-      <h2>How it works</h2>
-      <ol class="steps">
-        <li><b>Drop your Punk</b><span>The original PNG, a download from a marketplace or a phone screenshot. We find the 24×24 pixels and read the colours.</span></li>
-        <li><b>Watch it build</b><span>Pick Mini or XL. Each pixel becomes bricks and plates in real colours, and the bust builds itself in 3D, cap first set aside, then put on.</span></li>
-        <li><b>Build it for real</b><span>Download the step-by-step instructions (PDF), the parts list and a BrickLink list you can upload to buy every piece.</span></li>
-      </ol>
-      <div class="sizes-compare">
-        <figure><img src="./hero-xl.jpg" alt="A Punk as an XL brick bust" width="540" height="540" loading="lazy"><figcaption><b>XL</b> · 1 pixel = 2×2 studs, hollow inside · about 1,250 pieces · about 25 × 21 × 35 cm</figcaption></figure>
-        <figure><img src="./hero-mini.jpg" alt="A Punk as a Mini brick bust" width="540" height="540" loading="lazy"><figcaption><b>Mini</b> · 1 pixel = 1 stud · about 400 pieces · about 12 × 9 × 17 cm</figcaption></figure>
+      <div class="sub">
+        <span class="vids">Videos <button id="vid-square" class="mini-btn">🎬 Square</button><button id="vid-story" class="mini-btn">📱 9:16</button></span>
+        <a id="share-x" class="x" href="#" target="_blank" rel="noopener">𝕏 Share</a>
       </div>
+      <div class="progress" id="progress" hidden><div class="bar"><i id="bar"></i></div><span id="progress-text"></span></div>
     </section>
 
     <section class="faq">
@@ -133,6 +107,23 @@
     <p>Models are computer-checked, not physically build-tested. <a href="https://github.com/hs7j4yk4sz-boop/punk-to-bricks/blob/main/DISCLAIMER.md" target="_blank" rel="noopener">Disclaimer</a> · <a href="https://github.com/hs7j4yk4sz-boop/punk-to-bricks" target="_blank" rel="noopener">Source code (MIT)</a></p>
     <p class="credit">Made by John Karp · NFT Morning · Inspired by <a href="https://x.com/victormustar" target="_blank" rel="noopener">@victormustar</a>'s Microduck</p>
   </footer>
+  <dialog id="order-panel" aria-labelledby="op-title">
+    <div class="op">
+      <button class="op-close" id="op-close" aria-label="Close">✕</button>
+      <h2 id="op-title">Order the bricks</h2>
+      <p class="op-lede">You order and pay directly on LEGO or BrickLink. Nothing goes through this site.</p>
+      <div class="lbar" aria-hidden="true"><i id="bar-lego"></i><i id="bar-bl"></i></div>
+      <div class="legend"><span><b id="leg-lego"></b> at LEGO Pick a Brick</span><span><b id="leg-bl"></b> BrickLink only</span></div>
+      <label class="toggle"><input type="checkbox" id="prefer-lego" role="switch"><span class="sw" aria-hidden="true"></span>
+        <span><b>Only parts LEGO sells</b><small id="prefer-note">Rebuilds your bust with smaller pieces where needed. Every check runs again.</small></span></label>
+      <ol class="steps3">
+        <li><span class="n">1</span><span class="t"><b>Download your LEGO list</b><small id="pab-note"></small></span><button id="dl-pab" class="btn">⬇ CSV</button></li>
+        <li><span class="n">2</span><span class="t"><b>Upload it on Pick a Brick</b><small>“Upload List” button, then check your bag</small></span><a class="btn light" href="https://www.lego.com/pick-and-build/pick-a-brick" target="_blank" rel="noopener">Open ↗</a></li>
+        <li><span class="n">3</span><span class="t"><b>Missing pieces? BrickLink</b><small id="rest-note">For parts LEGO doesn’t have in stock</small></span><span class="btns"><button id="dl-xml-rest" class="btn light" hidden>⬇ Missing</button><button id="dl-xml" class="btn light">⬇ XML</button></span></li>
+      </ol>
+      <p class="fine">Uploading a list isn’t available in every country: check <a href="https://www.lego.com/pick-and-build/pick-a-brick" target="_blank" rel="noopener">Pick a Brick</a> for yours. LEGO lists any piece it couldn’t add: get those on BrickLink (Want → Upload).</p>
+    </div>
+  </dialog>
   <dialog id="before-order" aria-labelledby="bo-title">
     <form method="dialog">
       <h2 id="bo-title">Before you order</h2>
