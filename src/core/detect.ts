@@ -77,7 +77,9 @@ export function detectPunk(img: RGBAImage): PunkGrid {
   cands.sort((a, b) => b.area - a.area);
 
   let lastErr: DetectError | null = null;
-  for (const c of cands.slice(0, 6)) {
+  // a tiny square inside a much bigger picture is a detail, not the Punk
+  const minSize = Math.min(img.width, img.height) > 400 ? 48 : 24;
+  for (const c of cands.filter(c => c.size >= minSize).slice(0, 6)) {
     try { return sample(img, c.x, c.y, c.size, null); } catch (e) { if (e instanceof DetectError) lastErr = e; else throw e; }
   }
   throw lastErr ?? new DetectError('no-punk', "We couldn't find a CryptoPunk in this image. Use the Punk's own image (PNG or JPG), or a screenshot where the Punk and its plain background are fully visible.");
@@ -141,6 +143,8 @@ function sample(img: RGBAImage, x0: number, y0: number, size: number, _bg: RGB |
     return k;
   }));
   const filled = colors.reduce((a, c) => a + c.count, 0);
+  // every Punk's neck reaches the bottom edge (at least 5 pixels on the 10,000)
+  if (cells[N - 1].filter(v => v >= 0).length < 4) throw new DetectError('no-punk', "We couldn't find a CryptoPunk in this image. If it shows several Punks, crop it so only yours and its background are visible.");
   if (filled < 60) throw new DetectError('empty', "We found a pixel grid, but it's almost empty. Is this really a Punk?");
   if (filled > 480) throw new DetectError('no-punk', "We found a pixel grid, but it's almost full: we couldn't tell the Punk from its background.");
   return {

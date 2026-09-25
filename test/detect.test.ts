@@ -2,7 +2,7 @@ import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { detectPunk, DetectError, type PunkGrid, type RGBAImage } from '../src/core/detect';
 import { REFERENCE_PUNK, TEST_PUNKS, type TestPunk } from './fixtures/punks';
-import { blank, load, punkImage, resize, screenshot, toJPEG } from './img';
+import { blank, load, paste, punkImage, resize, screenshot, toJPEG } from './img';
 import jpeg from 'jpeg-js';
 import { deltaE, hexToRgb, rgbToLab } from '../src/core/color';
 
@@ -54,6 +54,12 @@ describe('grid detection', () => {
     expectSameGrid(detectPunk(load(path)), REFERENCE_PUNK);
   });
 
+  it('rejects a picture of several Punks side by side', () => {
+    const files = ['a-1', 'b-1', 'b-2', 'b-3', 'b-4', 'b-5', 'c-1', 'c-2', 'c-5'];
+    const sheet = blank(3 * 24 * 11 + 40, 3 * 24 * 11 + 40, [99, 132, 151, 255]);
+    files.forEach((f, i) => paste(sheet, resize(load(`public/examples/${f}.png`), 24 * 11, 24 * 11), 20 + (i % 3) * 264, 20 + Math.floor(i / 3) * 264));
+    expect(() => detectPunk(sheet)).toThrow(DetectError);
+  });
   it('rejects noise', () => {
     const img = blank(300, 300);
     let s = 1; for (let i = 0; i < img.data.length; i++) img.data[i] = i % 4 === 3 ? 255 : (s = (s * 48271) % 2147483647) & 255;
