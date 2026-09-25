@@ -37,3 +37,7 @@ Tests on the 10,000 real CryptoPunks run only if you put the official `punks.png
 Unofficial fan project. Not affiliated with the LEGO Group or the CryptoPunks project. Models are computer-checked, not physically build-tested.
 
 Made by John Karp · NFT Morning.
+
+## License
+
+The code is released under the [0BSD license](LICENSE): do anything you want with it, no conditions, no attribution required. This covers the code only, not CryptoPunks images or any trademark.
