@@ -1,0 +1,71 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Punk to Bricks</title>
+  <meta name="description" content="Turn your CryptoPunk into a brick bust you can really build: 3D build animation, PDF instructions and a BrickLink parts list. Free, and your image never leaves your browser.">
+  <meta name="theme-color" content="#B4DBF1">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='16' rx='3' fill='%23B4DBF1'/%3E%3Crect x='3' y='6' width='10' height='7' fill='%23AA7D55'/%3E%3Crect x='4' y='4' width='3' height='2' fill='%23AA7D55'/%3E%3Crect x='9' y='4' width='3' height='2' fill='%23AA7D55'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="/src/style.css">
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="./">Punk to Bricks</a>
+    <span class="tag">Free · runs in your browser</span>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Turn your Punk into a brick bust you can really build</h1>
+      <p class="lede">Drop your CryptoPunk image. You get a 3D build animation, step-by-step PDF instructions and a BrickLink parts list.</p>
+    </section>
+
+    <section class="panel" id="input-panel">
+      <label class="drop" id="drop" tabindex="0">
+        <input type="file" id="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+        <span class="drop-title">Drop your Punk here</span>
+        <span class="drop-sub">or <u>choose an image</u>, or paste it (⌘/Ctrl + V). PNG or JPG, any size, screenshots work.</span>
+      </label>
+      <p class="privacy"><strong>Your image never leaves your browser.</strong> Everything is computed on your device: no upload, no server, no AI.</p>
+      <div class="examples">
+        <span>No Punk at hand? Try one:</span>
+        <div id="examples" class="example-row"></div>
+      </div>
+      <p class="error" id="error" role="alert" hidden></p>
+    </section>
+
+    <section class="result" id="result" hidden>
+      <div class="toolbar">
+        <div class="sizes" role="radiogroup" aria-label="Size">
+          <button class="size" data-size="mini" role="radio">Mini <small>1 pixel = 1 stud</small></button>
+          <button class="size" data-size="xl" role="radio">XL <small>1 pixel = 2×2 studs</small></button>
+        </div>
+        <div class="actions">
+          <button id="replay" class="ghost">Replay</button>
+          <button id="skip" class="ghost">Skip</button>
+        </div>
+      </div>
+      <div class="stage">
+        <canvas id="view" aria-label="3D view of the brick bust"></canvas>
+        <div class="busy" id="busy" hidden><span class="spinner"></span><span id="busy-text">Building…</span></div>
+        <p class="hint" id="hint" hidden>Drag to turn · pinch or scroll to zoom</p>
+      </div>
+      <div class="info">
+        <div class="read">
+          <canvas id="grid" width="96" height="96" aria-label="The Punk as we read it"></canvas>
+          <div><strong>What we read</strong><br><span id="read-text"></span></div>
+        </div>
+        <ul class="checks" id="checks"></ul>
+        <ul class="notes" id="notes"></ul>
+      </div>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <p>Unofficial fan project. Not affiliated with the LEGO Group or the CryptoPunks project. Models are computer-checked, not physically build-tested.</p>
+    <p class="credit">Made by John Karp · NFT Morning · Inspired by <a href="https://x.com/victormustar" target="_blank" rel="noopener">@victormustar</a>'s Microduck</p>
+  </footer>
+  <script type="module" src="/src/main.ts"></script>
+</body>
+</html>

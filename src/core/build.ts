@@ -280,18 +280,34 @@ export function buildModel(grid: PunkGrid, size: SizeId, overrides: Partial<Size
 
   // ---------- 8. steps, parts list, checks ----------
   const pieces: Piece[] = [...layers.flatMap(L => L.pieces), ...tops];
-  const steps: number[][] = [];
-  const stepAt = new Map<number, number>();
-  layers.forEach(L => { stepAt.set(L.y, steps.length); steps.push([]); });
-  pieces.forEach((p, i) => {
-    let s = stepAt.get(p.y);
-    if (p.kind === 'tile' || p.kind === 'slope') {
-      if (s === undefined) { s = steps.length; steps.push([]); stepAt.set(p.y, s); }
-    }
-    steps[s!].push(i);
-  });
-  const ordered = steps.filter(s => s.length).map(s => s.sort((a, b) => pieces[a].z - pieces[b].z || pieces[a].x - pieces[b].x));
-  const sortedSteps = ordered.sort((a, b) => pieces[a[0]].y - pieces[b[0]].y);
+  // one step per layer; tiles and slopes go with the layer at their height
+  const layerYs = [...new Set(pieces.map(p => p.y))].sort((a, b) => a - b);
+  const stepOf = pieces.map(p => layerYs.indexOf(p.y));
+  // a piece that hangs under another (nothing holds it from below yet) is
+  // added right after the piece that holds it, in that piece's step
+  const { adj } = connections(pieces);
+  const deferred = new Set<number>();
+  for (let pass = 0; pass < 30; pass++) {
+    let changed = false;
+    pieces.forEach((p, i) => {
+      if (stepOf[i] === 0) return;
+      const nb = [...adj[i].keys()];
+      if (nb.some(j => pieces[j].y < p.y && stepOf[j] <= stepOf[i])) return;
+      const up = nb.filter(j => pieces[j].y > p.y).map(j => stepOf[j]);
+      if (!up.length) return;
+      const s = Math.min(...up);
+      if (s > stepOf[i]) { stepOf[i] = s; deferred.add(i); changed = true; }
+    });
+    if (!changed) break;
+  }
+  const byStep: number[][] = layerYs.map(() => []);
+  pieces.forEach((_, i) => byStep[stepOf[i]].push(i));
+  const sortedSteps = byStep.filter(s => s.length).map(s => s.sort((a, b) => {
+    const da = deferred.has(a) ? 1 : 0, db = deferred.has(b) ? 1 : 0;
+    if (da !== db) return da - db;
+    const pa = pieces[a], pb = pieces[b];
+    return (da ? pb.y - pa.y : pa.y - pb.y) || pa.z - pb.z || pa.x - pb.x;
+  }));
 
   const checks = checkModel(pieces);
   if (checks.floating) notes.push(`${checks.floating} piece${checks.floating > 1 ? 's are' : ' is'} not connected to the base.`);
@@ -311,15 +327,20 @@ export function buildModel(grid: PunkGrid, size: SizeId, overrides: Partial<Size
 
 /** Rows at the top that are hat/hair rather than face: built as a separate sub-assembly. */
 function headwearRows(px: (PixelInfo | null)[][], skin: number, rTop: number): Set<number> {
-  const out = new Set<number>();
+  // the rows above the face (until skin shows up), if at least two of them
+  // are mostly hat or hair; black counts when it is a filled area (a black
+  // hat), not just the outline
+  const block = new Set<number>();
+  let wearRows = 0;
   for (let r = rTop; r < 13; r++) {
     const ps = px[r].filter((p): p is PixelInfo => !!p && p.role !== 'support');
     if (!ps.length) continue;
-    const skinShare = ps.filter(p => p.color === skin).length / ps.length;
-    if (skinShare >= 0.25) break;
-    out.add(r);
+    if (ps.filter(p => p.color === skin).length / ps.length >= 0.25) break;
+    const wear = ps.filter(p => p.color !== skin && (p.color !== BLACK || p.fill === BLACK) && !COLOR_BY_ID.get(p.color)?.trans).length / ps.length;
+    if (wear >= 0.4) wearRows++;
+    block.add(r);
   }
-  return out;
+  return wearRows >= 2 ? block : new Set();
 }
 
 /** Fix pieces that aren't connected to the base: re-tile around them, bridge from above, or add a support column. */

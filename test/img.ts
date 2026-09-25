@@ -4,7 +4,7 @@ import { PNG } from 'pngjs';
 import jpeg from 'jpeg-js';
 import { hexToRgb } from '../src/core/color';
 import type { RGBAImage } from '../src/core/detect';
-import type { TestPunk } from './fixtures/punks';
+import type { TestPunk } from '../src/examples/punks';
 
 export function blank(width: number, height: number, rgba: [number, number, number, number] = [255, 255, 255, 255]): RGBAImage {
   const data = new Uint8ClampedArray(width * height * 4);

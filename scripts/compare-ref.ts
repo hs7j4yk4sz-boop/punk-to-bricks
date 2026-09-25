@@ -4,7 +4,7 @@ import { buildModel } from '../src/core/build';
 import { detectPunk } from '../src/core/detect';
 import { COLOR_BY_ID } from '../src/core/palette';
 import type { Piece } from '../src/core/parts';
-import { REFERENCE_PUNK } from '../test/fixtures/punks';
+import { REFERENCE_PUNK } from '../src/examples/punks';
 import { punkImage } from '../test/img';
 
 const REF = JSON.parse(readFileSync('../cryptopunk-brick-bust/model/model.json', 'utf8'));

@@ -3,7 +3,7 @@ import { mkdirSync, writeFileSync } from 'node:fs';
 import { buildModel } from '../src/core/build';
 import { detectPunk } from '../src/core/detect';
 import { COLOR_BY_ID } from '../src/core/palette';
-import { REFERENCE_PUNK, TEST_PUNKS } from '../test/fixtures/punks';
+import { REFERENCE_PUNK, TEST_PUNKS } from '../src/examples/punks';
 import { punkImage, screenshot, toJPEG, toPNG } from '../test/img';
 import { rgbToHex } from '../src/core/color';
 
