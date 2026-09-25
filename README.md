@@ -11,7 +11,7 @@ Turn your CryptoPunk into a brick bust you can really build.
 
 ## How to use
 
-1. **Drop your Punk** on the site: the original PNG, a marketplace download or a phone screenshot. No Punk at hand? Click one of the examples.
+1. **Type your Punk number** (0 to 9999), or **drop its image**: the original PNG, a marketplace download or a phone screenshot. No Punk at hand? Click one of the examples.
 2. **Watch it build** in 3D, pick **Mini** (about 400 pieces) or **XL** (about 1,250 pieces), then turn it with your finger or mouse.
 3. Read the key figures at a glance: **pieces, steps, lots to buy, size**. "More info" shows every check (studs connected, 0 floating, 0 collisions, balance).
 4. **Download full kit**: one ZIP with the step-by-step instructions (PDF) and the parts list.
@@ -50,7 +50,7 @@ npm test           # unit tests (detection, solidity, exports, all example Punks
 npm run build      # static site in dist/
 ```
 
-Tests on the 10,000 real CryptoPunks run only if you put the official `punks.png` (from [larvalabs/cryptopunks](https://github.com/larvalabs/cryptopunks)) in `real/`. That folder is git-ignored: the real Punk images are not part of this repository. The example Punks on the site are real Punks used with their owners' permission (public/examples). The drawings in test/fixtures are only used by the tests.
+Typing a Punk number uses `public/punks.png`, the official image of all 10,000 CryptoPunks from [larvalabs/cryptopunks](https://github.com/larvalabs/cryptopunks): it is downloaded once, only when a visitor types a number, and the Punk is cut out in the browser. Tests on all 10,000 Punks run when that same file is copied to `real/punks.png` (git-ignored). The drawings in test/fixtures are only used by the tests.
 
 ## Notes
 

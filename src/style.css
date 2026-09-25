@@ -180,3 +180,15 @@ dialog#order-panel::backdrop { background: #0d161d99; }
 dialog#order-panel { max-height: calc(100dvh - 24px); overflow: auto; }
 .how-bl li { display: list-item; border: 0; padding: 0; }
 .bl-row .btns { flex-wrap: nowrap; }
+
+/* two ways in: type the number, or drop an image */
+.choose { display: grid; grid-template-columns: 1fr auto 1fr; gap: 12px; align-items: stretch; }
+@media (max-width: 700px) { .choose { grid-template-columns: 1fr; } }
+.choose .drop { min-height: 170px; }
+.or { align-self: center; justify-self: center; color: var(--muted); font-weight: 700; font-size: 14px; }
+.by-number { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; padding: 20px; border: 2px solid var(--line); border-radius: 12px; text-align: center; }
+.by-number:focus-within { border-color: var(--accent); }
+.num-row { display: flex; align-items: center; gap: 6px; background: var(--bg); border-radius: 12px; padding: 6px 6px 6px 14px; }
+.hash { font-size: 24px; font-weight: 800; color: var(--muted); }
+#punk-number { width: 5.2ch; font: 800 28px/1 inherit; font-family: inherit; border: 0; background: none; color: var(--ink); outline: none; padding: 4px 0; }
+.go { border: 0; border-radius: 10px; background: var(--ink); color: var(--card); font-weight: 700; padding: 10px 18px; }

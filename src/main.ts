@@ -36,6 +36,35 @@ async function fileToImage(blob: Blob): Promise<RGBAImage> {
   const d = x.getImageData(0, 0, w, h);
   return { width: w, height: h, data: d.data };
 }
+/** Punk #n, cut from the official 10,000-Punk image (public/punks.png, loaded on first use), on the usual blue background. */
+let sheet: Promise<ImageData> | null = null;
+async function punkByNumber(n: number): Promise<RGBAImage> {
+  sheet ??= fetch('./punks.png').then(r => { if (!r.ok) throw new Error(); return r.blob(); })
+    .then(b => createImageBitmap(b, { premultiplyAlpha: 'none', colorSpaceConversion: 'none' }))
+    .then(bmp => { const c = document.createElement('canvas'); c.width = bmp.width; c.height = bmp.height; const x = c.getContext('2d', { willReadFrequently: true })!; x.drawImage(bmp, 0, 0); return x.getImageData(0, 0, c.width, c.height); })
+    .catch(e => { sheet = null; throw e; });
+  const d = await sheet, X = (n % 100) * 24, Y = Math.floor(n / 100) * 24, BG = [0x63, 0x85, 0x96];
+  const data = new Uint8ClampedArray(24 * 24 * 4);
+  for (let y = 0; y < 24; y++) for (let x = 0; x < 24; x++) {
+    const o = ((Y + y) * d.width + X + x) * 4, a = d.data[o + 3] / 255, k = (y * 24 + x) * 4;
+    for (let i = 0; i < 3; i++) data[k + i] = Math.round(d.data[o + i] * a + BG[i] * (1 - a));
+    data[k + 3] = 255;
+  }
+  return { width: 24, height: 24, data };
+}
+$('by-number').addEventListener('submit', async e => {
+  e.preventDefault();
+  const raw = $<HTMLInputElement>('punk-number').value.trim();
+  if (!/^\d{1,4}$/.test(raw)) { showError('Type a Punk number from 0 to 9999.'); return; }
+  const n = +raw;
+  showError(null); $('result').hidden = false; busy(`Finding Punk #${n}…`);
+  let img: RGBAImage;
+  try { img = await punkByNumber(n); } catch { busy(null); showError('We couldn’t load the Punks. Check your connection, or drop your image instead.'); return; }
+  const plate = $<HTMLInputElement>('punkno'); plate.value = String(n);
+  await start(img);
+  viewer.setLabel(plateLabel());
+});
+
 /** An example Punk from public/examples (real Punks, used with permission). */
 async function exampleImage(file: string): Promise<RGBAImage> {
   const res = await fetch(`./examples/${file}`);

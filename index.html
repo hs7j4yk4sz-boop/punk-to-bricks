@@ -27,16 +27,28 @@
   <main>
     <section class="hero">
       <h1>Turn your Punk into a brick bust you can really build</h1>
-      <p class="lede">Drop your CryptoPunk image. You get a 3D build animation, step-by-step PDF instructions and a BrickLink parts list.</p>
+      <p class="lede">Type your Punk number or drop its image. You get a 3D build animation, step-by-step instructions and your parts list, ready to order.</p>
     </section>
 
     <section class="panel" id="input-panel">
-      <label class="drop" id="drop" tabindex="0">
-        <input type="file" id="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
-        <span class="drop-title">Drop your Punk here</span>
-        <span class="drop-sub">or <u>choose an image</u>, or paste it (⌘/Ctrl + V). PNG or JPG, any size, screenshots work.</span>
-      </label>
-      <p class="privacy"><strong>Your image never leaves your browser.</strong> Everything is computed on your device: no upload, no server, no AI.</p>
+      <div class="choose">
+        <form class="by-number" id="by-number" autocomplete="off" novalidate>
+          <label for="punk-number" class="drop-title">Type your Punk #</label>
+          <div class="num-row">
+            <span class="hash" aria-hidden="true">#</span>
+            <input id="punk-number" inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="1234" aria-describedby="num-help">
+            <button class="go" type="submit">Build</button>
+          </div>
+          <span class="drop-sub" id="num-help">Any Punk from 0 to 9999.</span>
+        </form>
+        <span class="or" aria-hidden="true">or</span>
+        <label class="drop" id="drop" tabindex="0">
+          <input type="file" id="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+          <span class="drop-title">Drop your image</span>
+          <span class="drop-sub"><u>Choose an image</u> or paste it. PNG or JPG, any size, screenshots work.</span>
+        </label>
+      </div>
+      <p class="privacy"><strong>Nothing leaves your browser.</strong> Your number or image is used on your device only: no upload, no server, no AI.</p>
       <div class="examples">
         <span>No Punk at hand? Try one:</span>
         <div id="examples" class="example-row"></div>
