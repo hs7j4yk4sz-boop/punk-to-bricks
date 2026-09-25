@@ -75,7 +75,6 @@
           <div class="dl">
             <button id="dl-pdf" class="big">Instructions <small>PDF booklet, one page per layer</small></button>
             <button id="dl-csv">Parts list <small>CSV</small></button>
-            <button id="dl-xml">BrickLink list <small>XML · Want → Upload</small></button>
           </div>
         </div>
         <div>
@@ -86,6 +85,22 @@
             <a id="share-x" class="x" href="#" target="_blank" rel="noopener">Share on X</a>
           </div>
           <p class="small">The video is made in your browser and saved to your device: attach it to your post yourself.</p>
+        </div>
+        <div class="order" id="order">
+          <h2>Order the bricks</h2>
+          <p class="order-summary" id="order-summary"></p>
+          <label class="prefer"><input type="checkbox" id="prefer-lego"> <span><b>Prefer parts available at LEGO</b><small>Rebuilds the model with pieces LEGO Pick a Brick sells (bigger pieces it doesn't sell become smaller ones), then runs every check again.</small></span></label>
+          <div class="dl">
+            <button id="dl-pab" class="big">Download Pick a Brick file <small id="pab-note">CSV · for LEGO Pick a Brick “Upload List”</small></button>
+            <button id="dl-xml">BrickLink list <small>XML · all parts · Want → Upload</small></button>
+            <button id="dl-xml-rest" hidden>BrickLink list <small id="rest-note">XML · only the parts not at LEGO</small></button>
+          </div>
+          <ol class="howto">
+            <li>Open <a href="https://www.lego.com/pick-and-build/pick-a-brick" target="_blank" rel="noopener">Pick a Brick</a> on the LEGO website.</li>
+            <li>Click “Upload List” and choose the file you downloaded.</li>
+            <li>Check your bag carefully: LEGO lists any piece it couldn’t add. Get those on BrickLink.</li>
+          </ol>
+          <p class="small">Uploading a list isn’t available in every country: check on <a href="https://www.lego.com/pick-and-build/pick-a-brick" target="_blank" rel="noopener">Pick a Brick</a> for yours. Nothing is ordered from this site: you buy directly from LEGO or from BrickLink sellers.</p>
         </div>
         <div class="progress" id="progress" hidden><div class="bar"><i id="bar"></i></div><span id="progress-text"></span></div>
       </div>
@@ -107,16 +122,34 @@
       <h2>Questions</h2>
       <details><summary>Is my image uploaded anywhere?</summary><p>No. Everything happens in your browser: reading the image, designing the model, the 3D view, the PDF and the video. There is no server and no AI behind this site, and nothing about your Punk is stored or sent.</p></details>
       <details><summary>Can I really build it?</summary><p>Every model is checked by computer: all pieces are standard parts in real colours, every piece is attached to the base (0 floating), no two pieces overlap (0 collisions) and the centre of mass sits over the base. The site shows these checks for your model and says so plainly if one fails. Models have not been built with real bricks yet, so treat your first build as a test. A few colours can be hard to find in large plates.</p></details>
-      <details><summary>How do I get the bricks?</summary><p>Download the BrickLink list (XML). On BrickLink, open Want → Upload, paste or upload the file, then buy from one or several sellers. The CSV parts list works in any spreadsheet.</p></details>
+      <details><summary>How do I get the bricks?</summary><p>Under “Order the bricks”: download the Pick a Brick file and upload it on LEGO Pick a Brick (“Upload List”), and/or download the BrickLink list and upload it on BrickLink (Want → Upload). The site tells you how many lots LEGO sells, and “Prefer parts available at LEGO” rebuilds your model with those parts only. You order and pay on those sites, never here.</p></details>
       <details><summary>What are the clear pieces?</summary><p>Some Punks have details that touch nothing, like cigarette smoke. They are held up by small clear bricks, and the site tells you when it adds them.</p></details>
-      <details><summary>Is this official?</summary><p>No. Punk to Bricks is an unofficial fan project, not affiliated with the LEGO Group or the CryptoPunks project.</p></details>
+      <details><summary>Is this official?</summary><p>No. Punk to Bricks is a free, open-source, unofficial fan project, not affiliated with, sponsored or endorsed by the LEGO Group, BrickLink or the CryptoPunks project. It sells nothing and earns nothing: no affiliate links, no commission, no tracking.</p></details>
     </section>
   </main>
 
   <footer class="foot">
-    <p>Unofficial fan project. Not affiliated with the LEGO Group or the CryptoPunks project. Models are computer-checked, not physically build-tested.</p>
+    <p>Unofficial fan project · Not affiliated with, sponsored or endorsed by the LEGO Group, BrickLink or the CryptoPunks project. LEGO® is a trademark of the LEGO Group. Parts data: <a href="https://rebrickable.com" target="_blank" rel="noopener">Rebrickable</a>. No purchases, payments or personal data go through this site.</p>
+    <p>Models are computer-checked, not physically build-tested. <a href="https://github.com/hs7j4yk4sz-boop/punk-to-bricks/blob/main/DISCLAIMER.md" target="_blank" rel="noopener">Disclaimer</a> · <a href="https://github.com/hs7j4yk4sz-boop/punk-to-bricks" target="_blank" rel="noopener">Source code (MIT)</a></p>
     <p class="credit">Made by John Karp · NFT Morning · Inspired by <a href="https://x.com/victormustar" target="_blank" rel="noopener">@victormustar</a>'s Microduck</p>
   </footer>
+  <dialog id="before-order" aria-labelledby="bo-title">
+    <form method="dialog">
+      <h2 id="bo-title">Before you order</h2>
+      <ul>
+        <li>This is a free, open-source fan project. I don't sell anything, I don't receive any money or commission, and I'm not involved in your order in any way.</li>
+        <li>You buy directly from LEGO or from independent BrickLink sellers. Prices, availability, shipping, returns and customer service are entirely theirs.</li>
+        <li>Models are generated automatically and checked by software only. They have NOT been physically built. Parts may be missing, wrong or unavailable, and the result may not hold together.</li>
+        <li>Always review your cart carefully before paying.</li>
+        <li>Provided "as is", without warranty of any kind. Use at your own risk.</li>
+      </ul>
+      <label class="agree"><input type="checkbox" id="bo-ok" required> I understand</label>
+      <div class="bo-actions">
+        <button value="cancel" class="ghost" formnovalidate>Cancel</button>
+        <button value="ok" id="bo-continue" class="primary" disabled>Continue to download</button>
+      </div>
+    </form>
+  </dialog>
   <script type="module" src="/src/main.ts"></script>
 </body>
 </html>

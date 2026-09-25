@@ -27,5 +27,5 @@
     "jspdf": "^4.2.1",
     "three": "^0.186.1"
   },
-  "license": "0BSD"
+  "license": "MIT"
 }

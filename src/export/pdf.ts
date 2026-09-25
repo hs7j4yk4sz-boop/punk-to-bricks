@@ -102,8 +102,9 @@ export async function drawPages(m: Model, grid: PunkGrid, o: PageOptions, use: (
     x.fillText(`${m.steps.length} steps · ${c.collisions} collisions · ${c.floating} floating`, 80, 850);
     x.fillText(`approx. ${m.dims[0]} × ${m.dims[1]} × ${m.dims[2]} cm`, 80, 895);
     x.font = `22px ${FONT}`; x.fillStyle = 'rgba(255,255,255,.85)';
-    x.fillText('Unofficial fan project · made with Punk to Bricks · not affiliated with the LEGO Group or the CryptoPunks project', 80, 1040);
-    x.fillText('Computer-checked, not physically build-tested.', 80, 1072);
+    x.font = `19px ${FONT}`;
+    x.fillText('Made with Punk to Bricks · Unofficial fan project · Not affiliated with, sponsored or endorsed by the LEGO Group, BrickLink or the CryptoPunks project.', 80, 1024);
+    x.fillText('LEGO® is a trademark of the LEGO Group. Parts data: Rebrickable. Computer-checked only, not physically built. Provided "as is", without warranty.', 80, 1052);
     await done(pg, 1);
   }
 

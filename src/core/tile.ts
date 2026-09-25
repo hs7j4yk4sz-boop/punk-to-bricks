@@ -20,6 +20,8 @@ export interface TileOpts {
   /** cells to place first, each with a piece that touches `below` as much as possible */
   priority?: number[];
   group?: Piece['group'];
+  /** only use sizes this returns true for (a 1×1 is always allowed, as a last resort) */
+  allow?: (kind: Kind, w: number, d: number, color: number) => boolean;
 }
 
 const isTrans = (c: number) => !!COLOR_BY_ID.get(c)?.trans;
@@ -41,7 +43,9 @@ export function tileLayer(cells: Layer, o: TileOpts): Piece[] {
     // transparent parts: small sizes only (Trans-Clear supports come up to 2×2)
     if (trans && (o.kind === 'tile' ? w * d > 2 : vis === TRANS_CLEAR ? w > 2 || d > 2 : w * d > 1)) return null;
     // a piece nobody can see is black: cheapest, easiest to find, one lot
-    return vis >= 0 ? vis : BLACK;
+    const c = vis >= 0 ? vis : BLACK;
+    if (o.allow && w * d > 1 && !o.allow(o.kind, w, d, c)) return null;
+    return c;
   }
   const supportOf = (X: number, Z: number, w: number, d: number) => {
     if (!below) return 0;

@@ -3,6 +3,7 @@ import { rgbToHex } from './core/color';
 import type { PunkGrid, RGBAImage } from './core/detect';
 import { Viewer } from './viewer/scene';
 import { brickLinkXML, partsCSV } from './export/parts';
+import { brickLinkRemainderXML, orderSummary, pickABrickFiles } from './export/order';
 import type { BuildReply, BuildRequest } from './worker/build.worker';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -18,7 +19,10 @@ viewer.onFinished = () => { $('hint').hidden = false; };
 
 let grid: PunkGrid | null = null;
 let size: SizeId = 'xl';
-const models: Partial<Record<SizeId, Model>> = {};
+// one model per size and "prefer LEGO parts" choice
+const models = new Map<string, Model>();
+let preferLego = false;
+const mkey = (s: SizeId) => `${s}|${preferLego}`;
 
 // ---------- input ----------
 async function fileToImage(blob: Blob): Promise<RGBAImage> {
@@ -42,11 +46,11 @@ async function start(image: RGBAImage) {
   showError(null);
   $('result').hidden = false;
   busy('Reading your Punk…');
-  const r = await build({ size, image });
+  const r = await build({ size, image, preferLego });
   if (!r.ok) { busy(null); $('result').hidden = !grid; showError(r.message); return; }
   grid = r.grid;
-  for (const k of Object.keys(models) as SizeId[]) delete models[k];
-  models[size] = r.model;
+  models.clear();
+  models.set(mkey(size), r.model);
   drawGrid(r.grid);
   show(r.model, r.ms);
   $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -56,13 +60,14 @@ async function setSize(s: SizeId) {
   size = s;
   document.querySelectorAll<HTMLButtonElement>('.size').forEach(b => b.setAttribute('aria-checked', String(b.dataset.size === s)));
   if (!grid) return;
-  if (!models[s]) {
-    busy(`Building the ${s === 'xl' ? 'XL' : 'Mini'} model…`);
-    const r = await build({ size: s, grid });
+  const have = models.get(mkey(s));
+  if (!have) {
+    busy(`Building the ${s === 'xl' ? 'XL' : 'Mini'} model${preferLego ? ' with parts LEGO sells' : ''}…`);
+    const r = await build({ size: s, grid, preferLego });
     if (!r.ok) { busy(null); showError(r.message); return; }
-    models[s] = r.model;
+    models.set(mkey(s), r.model);
     show(r.model, r.ms);
-  } else show(models[s]!, 0);
+  } else show(have, 0);
 }
 
 function show(m: Model, ms: number) {
@@ -71,6 +76,7 @@ function show(m: Model, ms: number) {
   viewer.setModel(m);
   viewer.play();
   renderChecks(m, ms);
+  renderOrder(m);
 }
 
 // ---------- panels ----------
@@ -123,7 +129,7 @@ export const plateLabel = () => { const n = $<HTMLInputElement>('punkno').value.
 $('punkno').addEventListener('input', () => viewer.setLabel(plateLabel()));
 
 // ---------- exports ----------
-const current = () => models[size] ?? null;
+const current = () => models.get(mkey(size)) ?? null;
 const baseName = () => `${plateLabel() ? 'punk-' + plateLabel().slice(1) : 'my-punk'}-${size}`;
 function save(blob: Blob, name: string) {
   const a = document.createElement('a');
@@ -145,7 +151,40 @@ async function run(label: string, job: () => Promise<void>) {
   finally { exporting = false; document.querySelectorAll<HTMLButtonElement>('.dl button').forEach(b => { b.disabled = false; }); }
 }
 $('dl-csv').addEventListener('click', () => { const m = current(); if (m) save(new Blob([partsCSV(m)], { type: 'text/csv' }), `${baseName()}-parts.csv`); });
-$('dl-xml').addEventListener('click', () => { const m = current(); if (m) save(new Blob([brickLinkXML(m)], { type: 'application/xml' }), `${baseName()}-bricklink.xml`); });
+// ---------- ordering ----------
+function renderOrder(m: Model) {
+  const s = orderSummary(m);
+  const lots = (n: number) => `${n} lot${n === 1 ? '' : 's'}`;
+  $('order-summary').innerHTML = `<span class="lego">${lots(s.lego.length)} available at LEGO Pick a Brick</span> (${s.legoPieces.toLocaleString('en')} pieces), `
+    + `<span class="${s.brickLinkOnly.length ? 'bl' : 'lego'}">${lots(s.brickLinkOnly.length)} only via BrickLink</span>${s.brickLinkOnly.length ? ` (${s.brickLinkOnlyPieces.toLocaleString('en')} pieces)` : ''}.`;
+  const files = pickABrickFiles(m).length;
+  $('pab-note').textContent = files > 1 ? `CSV · ${files} files (Pick a Brick takes 400 references per list)` : 'CSV · for LEGO Pick a Brick “Upload List”';
+  $<HTMLButtonElement>('dl-pab').disabled = files === 0;
+  $('dl-xml-rest').hidden = s.brickLinkOnly.length === 0 || s.lego.length === 0;
+  $('rest-note').textContent = `XML · only the ${lots(s.brickLinkOnly.length)} not at LEGO`;
+  $<HTMLInputElement>('prefer-lego').checked = preferLego;
+}
+/** The "Before you order" notice, once per visit, before the first order file. */
+let understood = false;
+function beforeOrder(): Promise<boolean> {
+  if (understood) return Promise.resolve(true);
+  const d = $<HTMLDialogElement>('before-order'), ok = $<HTMLInputElement>('bo-ok'), go = $<HTMLButtonElement>('bo-continue');
+  ok.checked = false; go.disabled = true;
+  ok.onchange = () => { go.disabled = !ok.checked; };
+  d.showModal();
+  return new Promise(res => { d.onclose = () => { understood = d.returnValue === 'ok' && ok.checked; res(understood); }; });
+}
+async function orderDownload(make: (m: Model) => void) {
+  const m = current();
+  if (m && await beforeOrder()) make(m);
+}
+$('dl-pab').addEventListener('click', () => orderDownload(m => {
+  const files = pickABrickFiles(m);
+  files.forEach((f, i) => setTimeout(() => save(new Blob([f], { type: 'text/csv' }), `${baseName()}-pick-a-brick${files.length > 1 ? `-${i + 1}-of-${files.length}` : ''}.csv`), i * 400));
+}));
+$('dl-xml').addEventListener('click', () => orderDownload(m => save(new Blob([brickLinkXML(m)], { type: 'application/xml' }), `${baseName()}-bricklink.xml`)));
+$('dl-xml-rest').addEventListener('click', () => orderDownload(m => save(new Blob([brickLinkRemainderXML(m)], { type: 'application/xml' }), `${baseName()}-bricklink-not-at-lego.xml`)));
+$('prefer-lego').addEventListener('change', e => { preferLego = (e.target as HTMLInputElement).checked; setSize(size); });
 $('dl-pdf').addEventListener('click', () => run('Instructions', async () => {
   const { makeInstructions } = await import('./export/pdf');
   progress('Drawing the instructions…', 0);

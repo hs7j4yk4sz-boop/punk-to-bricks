@@ -4,7 +4,8 @@ import { checkModel, connections, grounded, type Checks } from './check';
 import type { PunkGrid } from './detect';
 import { BASE_GRAY, BLACK, COLOR_BY_ID, TRANS_CLEAR } from './palette';
 import { partId, partName, SIZES, TILE_SIZES, type Kind, type Piece } from './parts';
-import { key, kx, kz, tileLayer, type Layer } from './tile';
+import { key, kx, kz, tileLayer, type Layer, type TileOpts } from './tile';
+import { availableAtLego } from './lego';
 
 export type SizeId = 'mini' | 'xl';
 
@@ -60,8 +61,14 @@ export interface Model {
 
 interface LayerRec { y: number; h: number; kind: Kind; cells: Layer; row: number | null; pieces: Piece[] }
 
-export function buildModel(grid: PunkGrid, size: SizeId, overrides: Partial<SizeSpec> = {}): Model {
+export interface BuildOptions {
+  /** only use parts LEGO sells (Pick a Brick), splitting the others into smaller ones */
+  preferLego?: boolean;
+}
+
+export function buildModel(grid: PunkGrid, size: SizeId, overrides: Partial<SizeSpec> & BuildOptions = {}): Model {
   const S = { ...SIZES_SPEC[size], ...overrides };
+  const allow = overrides.preferLego ? availableAtLego : undefined;
   const A = analyze(grid);
   const notes = [...A.notes];
   const { sx, D } = S;
@@ -213,10 +220,10 @@ export function buildModel(grid: PunkGrid, size: SizeId, overrides: Partial<Size
       for (const l of spec) { layers.push({ y, h: l.h, kind: l.kind, cells, row: r, pieces: [] }); y += l.h; }
     }
     layers.forEach((L, i) => {
-      L.pieces = tileLayer(L.cells, { kind: L.kind, y: L.y, h: L.h, prefX: i % 2 === 0, sizes: SIZES, below: i ? occupied(layers[i - 1]) : null, group: groupOf(L) });
+      L.pieces = tileLayer(L.cells, { kind: L.kind, y: L.y, h: L.h, prefX: i % 2 === 0, sizes: SIZES, below: i ? occupied(layers[i - 1]) : null, group: groupOf(L), allow });
     });
     // ---------- 6. repair anything that doesn't hold ----------
-    repair(layers, repairNotes, groupOf);
+    repair(layers, repairNotes, groupOf, allow);
     return layers;
   };
   const split = new Set<number>();
@@ -250,7 +257,7 @@ export function buildModel(grid: PunkGrid, size: SizeId, overrides: Partial<Size
       const z0 = -Math.ceil((S.baseMargin.front + d) / 2);
       let ok = true;
       for (let i2 = 0; i2 < w; i2++) for (let j = 0; j < d; j++) if (!exposed.has(key(cx0 + i2, z0 + j))) ok = false;
-      if (ok) {
+      if (ok && (!allow || allow('tile', w, d, BASE_GRAY))) {
         for (let i2 = 0; i2 < w; i2++) for (let j = 0; j < d; j++) exposed.delete(key(cx0 + i2, z0 + j));
         tops.push({ x: cx0, z: z0, y: top, h: 1, w, d, c: BASE_GRAY, kind: 'tile', part: partId('tile', w, d), group: 'base', nameplate: true });
       }
@@ -271,11 +278,12 @@ export function buildModel(grid: PunkGrid, size: SizeId, overrides: Partial<Size
         if (!f(X, Z + 2) && !f(X + 1, Z + 2)) open.push('S');
         if (open.length !== 1) continue;
         const c = exposed.get(ks[0])!.c;
+        if (allow && !allow('slope', 2, 2, c)) continue;
         ks.forEach(k => exposed.delete(k));
         tops.push({ x: X, z: Z, y: top, h: 2, w: 2, d: 2, c, kind: 'slope', part: partId('slope', 2, 2), dir: open[0], group: groupOf(L) });
       }
     }
-    tops.push(...tileLayer(exposed, { kind: 'tile', y: top, h: 1, prefX: i % 2 === 1, sizes: TILE_SIZES, group: groupOf(L) }));
+    tops.push(...tileLayer(exposed, { kind: 'tile', y: top, h: 1, prefX: i % 2 === 1, sizes: TILE_SIZES, group: groupOf(L), allow }));
   });
 
   // ---------- 8. steps, parts list, checks ----------
@@ -344,7 +352,7 @@ function headwearRows(px: (PixelInfo | null)[][], skin: number, rTop: number): S
 }
 
 /** Fix pieces that aren't connected to the base: re-tile around them, bridge from above, or add a support column. */
-function repair(layers: LayerRec[], notes: string[], groupOf: (L: LayerRec) => Piece['group']) {
+function repair(layers: LayerRec[], notes: string[], groupOf: (L: LayerRec) => Piece['group'], allow?: TileOpts['allow']) {
   const flat = () => layers.flatMap(L => L.pieces);
   const floatingCount = () => {
     const ps = flat(); const { adj } = connections(ps); const g = grounded(ps, adj);
@@ -369,7 +377,7 @@ function repair(layers: LayerRec[], notes: string[], groupOf: (L: LayerRec) => P
       const region = old.filter(q => !q.support && near(P, q, 4));
       const cells: Layer = new Map();
       region.forEach(q => cellsOf(q).forEach(k => cells.set(k, L.cells.get(k)!)));
-      const fresh = tileLayer(cells, { kind: L.kind, y: L.y, h: L.h, prefX: li % 2 === 0, sizes: SIZES, below, priority, group: groupOf(L) });
+      const fresh = tileLayer(cells, { kind: L.kind, y: L.y, h: L.h, prefX: li % 2 === 0, sizes: SIZES, below, priority, group: groupOf(L), allow });
       L.pieces = [...old.filter(q => !region.includes(q)), ...fresh];
       return () => { L.pieces = old; };
     };
