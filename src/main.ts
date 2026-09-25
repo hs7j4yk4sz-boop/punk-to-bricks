@@ -153,10 +153,10 @@ let exporting = false;
 async function run(label: string, job: () => Promise<void>) {
   if (exporting || !current()) return;
   exporting = true;
-  document.querySelectorAll<HTMLButtonElement>('.act, .mini-btn').forEach(b => { b.disabled = true; });
+  document.querySelectorAll<HTMLButtonElement>('.act, .vid-btn').forEach(b => { b.disabled = true; });
   try { await job(); progress(null); }
   catch (e) { progress(`${label} failed: ${(e as Error).message}`, 0); }
-  finally { exporting = false; document.querySelectorAll<HTMLButtonElement>('.act, .mini-btn').forEach(b => { b.disabled = false; }); }
+  finally { exporting = false; document.querySelectorAll<HTMLButtonElement>('.act, .vid-btn').forEach(b => { b.disabled = false; }); }
 }
 // ---------- ordering ----------
 function renderOrder(m: Model) {

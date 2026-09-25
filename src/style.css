@@ -168,3 +168,7 @@ dialog#order-panel::backdrop { background: #0d161d99; }
 .btn.light { background: var(--bg); color: var(--ink); }
 .btn:disabled { opacity: .5; }
 .fine { font-size: 12px; color: var(--muted); margin: 12px 0 0; }
+.vid-btn { display: inline-flex; align-items: center; gap: 10px; border: 1px solid var(--line); background: var(--card); color: var(--ink); border-radius: 12px; padding: 10px 16px; text-align: left; font-size: 20px; }
+.vid-btn b { display: block; font-size: 15px; } .vid-btn small { display: block; font-size: 12px; color: var(--muted); }
+.vid-btn:hover { border-color: var(--accent); } .vid-btn:disabled { opacity: .5; }
+@media (max-width: 700px) { .vids { width: 100%; } .vid-btn { flex: 1; } }
