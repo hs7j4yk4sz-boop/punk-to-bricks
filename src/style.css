@@ -192,3 +192,79 @@ dialog#order-panel { max-height: calc(100dvh - 24px); overflow: auto; }
 .hash { font-size: 24px; font-weight: 800; color: var(--muted); }
 #punk-number { width: 5.2ch; font: 800 28px/1 inherit; font-family: inherit; border: 0; background: none; color: var(--ink); outline: none; padding: 4px 0; }
 .go { border: 0; border-radius: 10px; background: var(--ink); color: var(--card); font-weight: 700; padding: 10px 18px; }
+
+/* ===== three sections: bust, instructions, buy ===== */
+.result { background: none; box-shadow: none; padding: 0; margin-top: 16px; }
+.sec { background: var(--card); border-radius: 18px; box-shadow: 0 1px 2px #0000000d, 0 4px 18px #0000000a; padding: 16px; margin-bottom: 18px; scroll-margin-top: 64px; }
+.sec-hd { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; }
+.sec-hd .num { width: 36px; height: 36px; border-radius: 50%; background: var(--ink); color: var(--card); display: grid; place-items: center; font-weight: 800; font-size: 18px; flex: none; }
+.sec-hd h2 { margin: 0; font-size: 22px; letter-spacing: -.01em; }
+.sec-hd p { margin: 0; color: var(--muted); font-size: 14px; }
+.secnav { position: sticky; top: 0; z-index: 20; display: flex; gap: 6px; margin: 16px -16px 0; padding: 10px 16px; overflow-x: auto;
+  background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+.secnav a { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 99px; font-weight: 600; font-size: 14px; white-space: nowrap; color: var(--muted); text-decoration: none; }
+.secnav a i { font-style: normal; width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; background: var(--line); color: var(--ink); font-size: 12px; font-weight: 800; }
+.secnav a.on { background: var(--ink); color: var(--card); } .secnav a.on i { background: var(--card); color: var(--ink); }
+.toast { position: fixed; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 30; width: min(520px, calc(100% - 32px)); background: var(--card); border-radius: 14px; padding: 12px 14px; box-shadow: 0 10px 30px #0003; margin: 0; }
+
+/* instructions reader */
+.reader { display: grid; gap: 10px; }
+.page-view { position: relative; background: color-mix(in srgb, var(--line) 60%, var(--bg)); border-radius: 12px; padding: 10px; display: flex; justify-content: center; }
+#page-canvas { width: 100%; max-width: 900px; height: auto; aspect-ratio: 1600 / 1131; border-radius: 6px; background: #fff; box-shadow: 0 6px 24px #0002; display: block; }
+.pg-arrow { position: absolute; top: 50%; transform: translateY(-50%); width: 44px; height: 44px; border-radius: 50%; border: 0; background: var(--card); color: var(--ink); box-shadow: 0 2px 8px #0003; font-size: 26px; font-weight: 800; line-height: 1; }
+.pg-arrow.l { left: 14px; } .pg-arrow.r { right: 14px; }
+.pg-arrow:disabled { opacity: .3; }
+@media (max-width: 700px) { .pg-arrow { width: 36px; height: 36px; font-size: 22px; } .pg-arrow.l { left: 4px; } .pg-arrow.r { right: 4px; } }
+.pg-slider { display: flex; align-items: center; gap: 12px; font-size: 14px; color: var(--muted); }
+.pg-slider input { flex: 1; accent-color: var(--ink); }
+.pg-slider strong { color: var(--ink); white-space: nowrap; min-width: 8ch; text-align: right; }
+.thumbs { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scroll-snap-type: x proximity; }
+.thumbs button { flex: none; width: 112px; border: 0; background: none; padding: 0; text-align: center; font-size: 11px; color: var(--muted); scroll-snap-align: start; }
+.thumbs canvas { width: 112px; height: 79px; display: block; border-radius: 5px; border: 2px solid transparent; background: var(--bg); }
+.thumbs button.on canvas { border-color: var(--accent); } .thumbs button.on { color: var(--ink); font-weight: 700; }
+.reader-dl { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+@media (max-width: 700px) { .reader-dl { grid-template-columns: 1fr; } }
+.small-act { padding: 12px 16px; } .small-act .ic { width: 38px; height: 38px; font-size: 18px; } .small-act b { font-size: 16px; }
+
+/* shopping list */
+.shoplist { border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 14px; position: relative; }
+.shop-top { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.shop-top b { font-size: 17px; } .shop-top span { font-size: 13px; color: var(--muted); }
+.shop-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 6px 10px; max-height: 250px; overflow: hidden; position: relative; }
+.shop-grid::after { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: 70px; background: linear-gradient(transparent, var(--card)); pointer-events: none; }
+.shoplist.open .shop-grid { max-height: none; } .shoplist.open .shop-grid::after { display: none; }
+.lot { display: flex; align-items: center; gap: 6px; position: relative; min-width: 0; }
+.lot canvas { width: 56px; height: 44px; flex: none; }
+.lot .q { font-weight: 800; font-size: 15px; } .lot small { display: block; font-size: 11px; color: var(--muted); line-height: 1.25; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lot > span:last-child { min-width: 0; }
+.dot { width: 11px; height: 11px; border-radius: 50%; display: inline-block; vertical-align: -1px; border: 2px solid var(--card); box-shadow: 0 0 0 1px #0002; }
+.dot.lego { background: #d6040f; } .dot.bl { background: #1f6fb2; }
+.lot .dot { position: absolute; left: 0; top: 2px; }
+.shop-more { display: block; margin: 6px auto 4px; border: 0; background: var(--ink); color: var(--card); border-radius: 99px; padding: 7px 16px; font-weight: 700; font-size: 13px; }
+.shop-keys { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12.5px; color: var(--muted); margin-top: 6px; }
+
+/* two calls to action */
+.ctas { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+@media (max-width: 700px) { .ctas { grid-template-columns: 1fr; } }
+.ctab { width: 100%; display: flex; align-items: center; gap: 14px; border: 0; border-radius: 16px; padding: 16px 18px; color: #fff; text-align: left; cursor: pointer; }
+.ctab.lego { background: #d6040f; } .ctab.bl { background: #1f6fb2; }
+.ctab:hover { filter: brightness(1.06); } .ctab:disabled { opacity: .5; }
+.ctab .logo { width: 46px; height: 46px; border-radius: 12px; background: #ffffff26; display: grid; place-items: center; font-size: 22px; flex: none; }
+.ctab b { display: block; font-size: 19px; } .ctab small { display: block; font-size: 13px; opacity: .88; }
+.ctab .n { margin-left: auto; text-align: right; font-size: 14px; white-space: nowrap; } .ctab .n b { display: inline; font-size: 30px; }
+.after { font-size: 13px; color: var(--ok); background: color-mix(in srgb, var(--ok) 12%, transparent); border-radius: 10px; padding: 7px 10px; margin-top: 8px; }
+.after a { color: inherit; }
+.swline { display: flex; gap: 10px; align-items: center; font-size: 13px; color: var(--muted); margin: 8px 0 0; cursor: pointer; position: relative; }
+.swline input { position: absolute; opacity: 0; pointer-events: none; }
+.swline .sw { width: 34px; height: 20px; border-radius: 10px; background: var(--line); position: relative; flex: none; transition: background .2s; }
+.swline .sw::after { content: ""; position: absolute; left: 2px; top: 2px; width: 16px; height: 16px; border-radius: 50%; background: #fff; transition: left .2s; box-shadow: 0 1px 2px #0003; }
+.swline input:checked + .sw { background: var(--ok); } .swline input:checked + .sw::after { left: 16px; }
+.swline input:focus-visible + .sw { outline: 2px solid var(--accent); outline-offset: 2px; }
+.swline.plain { display: block; cursor: default; }
+.linkbtn { border: 0; background: none; padding: 0; color: var(--accent); text-decoration: underline; font: inherit; cursor: pointer; }
+.howorder { border-top: 1px solid var(--line); padding-top: 10px; font-size: 14px; }
+.howorder summary { font-weight: 600; cursor: pointer; }
+.howorder-body p { color: var(--muted); margin: 8px 0 0; }
+.howorder-body b { color: var(--ink); }
+@media (max-width: 700px) { .shop-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; } .lot canvas { width: 44px; height: 35px; } .shoplist { padding: 10px; } }
+.lot canvas { background: #eef2f5; border-radius: 8px; }

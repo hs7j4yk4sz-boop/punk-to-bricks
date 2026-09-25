@@ -4,6 +4,8 @@ import type { PunkGrid, RGBAImage } from './core/detect';
 import { Viewer } from './viewer/scene';
 import { brickLinkXML, partsCSV } from './export/parts';
 import { brickLinkRemainderXML, orderSummary, pickABrickFiles } from './export/order';
+import { icon } from './export/pdf';
+import { renderHex } from './core/palette';
 import type { BuildReply, BuildRequest } from './worker/build.worker';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -74,6 +76,7 @@ async function exampleImage(file: string): Promise<RGBAImage> {
 async function start(image: RGBAImage) {
   showError(null);
   $('result').hidden = false;
+  $('sec-bust').scrollIntoView({ behavior: 'smooth', block: 'start' });
   busy('Reading your Punk…');
   const r = await build({ size, image, preferLego });
   if (!r.ok) { busy(null); $('result').hidden = !grid; showError(r.message); return; }
@@ -82,7 +85,6 @@ async function start(image: RGBAImage) {
   models.set(mkey(size), r.model);
   drawGrid(r.grid);
   show(r.model, r.ms);
-  $('result').scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 async function setSize(s: SizeId) {
@@ -105,7 +107,10 @@ function show(m: Model, ms: number) {
   viewer.setModel(m);
   viewer.play();
   renderChecks(m, ms);
-  renderOrder(m);
+  renderBustSub();
+  $('secnav').hidden = false;
+  renderBuy(m);
+  renderReader(m);
 }
 
 // ---------- panels ----------
@@ -163,7 +168,7 @@ document.querySelectorAll<HTMLButtonElement>('.size').forEach(b => b.addEventLis
 $('replay').addEventListener('click', () => { $('hint').hidden = true; viewer.play(); });
 $('skip').addEventListener('click', () => viewer.skip());
 export const plateLabel = () => { const n = $<HTMLInputElement>('punkno').value.replace(/\D/g, '').slice(0, 5); return n ? `#${n}` : ''; };
-$('punkno').addEventListener('input', () => viewer.setLabel(plateLabel()));
+$('punkno').addEventListener('input', () => viewer.setLabel(plateLabel()));  // the reader follows below
 
 // ---------- exports ----------
 const current = () => models.get(mkey(size)) ?? null;
@@ -179,75 +184,94 @@ function progress(text: string | null, f = 0) {
   if (text !== null) { $('progress-text').textContent = text; $('bar').style.width = `${Math.round(f * 100)}%`; }
 }
 let exporting = false;
+const busyButtons = () => document.querySelectorAll<HTMLButtonElement>('.act, .vid-btn, .ctab');
 async function run(label: string, job: () => Promise<void>) {
   if (exporting || !current()) return;
   exporting = true;
-  document.querySelectorAll<HTMLButtonElement>('.act, .vid-btn').forEach(b => { b.disabled = true; });
+  busyButtons().forEach(b => { b.disabled = true; });
   try { await job(); progress(null); }
-  catch (e) { progress(`${label} failed: ${(e as Error).message}`, 0); }
-  finally { exporting = false; document.querySelectorAll<HTMLButtonElement>('.act, .vid-btn').forEach(b => { b.disabled = false; }); }
+  catch (e) { progress(`${label} failed: ${(e as Error).message}`, 0); setTimeout(() => progress(null), 6000); }
+  finally { exporting = false; busyButtons().forEach(b => { b.disabled = false; }); }
 }
-// ---------- ordering ----------
-function renderOrder(m: Model) {
-  const s = orderSummary(m);
-  const lots = (n: number) => `${n} lot${n === 1 ? '' : 's'}`;
-  const all = s.lego.length + s.brickLinkOnly.length || 1;
-  $('bar-lego').style.width = `${(100 * s.lego.length) / all}%`;
-  $('bar-bl').style.width = `${(100 * s.brickLinkOnly.length) / all}%`;
-  $('leg-lego').textContent = lots(s.lego.length);
-  $('leg-bl').textContent = lots(s.brickLinkOnly.length);
-  $('order-chip').textContent = `${s.lego.length} of ${all} lots at LEGO`;
-  const files = pickABrickFiles(m).length;
-  // always "x of total", so each list reads at a glance
-  const totalLots = m.bom.length, totalPcs = m.checks.pieces.toLocaleString('en');
-  $('pab-note').textContent = `${files > 1 ? `${files} files · ` : ''}${s.lego.length} of ${totalLots} lots · ${s.legoPieces.toLocaleString('en')} of ${totalPcs} pieces`;
-  $('dl-pab').textContent = files > 1 ? `⬇ ${files} CSV` : '⬇ CSV';
-  $<HTMLButtonElement>('dl-pab').disabled = files === 0;
-  $('bl-missing-row').hidden = s.brickLinkOnly.length === 0;
-  $('rest-note').textContent = `${s.brickLinkOnly.length} of ${totalLots} lots · ${s.brickLinkOnlyPieces.toLocaleString('en')} of ${totalPcs} pieces · LEGO doesn’t sell them`;
-  $('all-note').textContent = `${totalLots} of ${totalLots} lots · ${totalPcs} of ${totalPcs} pieces · to buy everything there`;
-  const base = models.get(`${size}|false`);
-  $('prefer-note').textContent = preferLego
-    ? `Done: every check ran again (${m.checks.floating} floating, ${m.checks.collisions} collisions)${base ? `, ${m.checks.pieces - base.checks.pieces >= 0 ? '+' : ''}${m.checks.pieces - base.checks.pieces} pieces` : ''}.`
-    : 'Rebuilds your bust with smaller pieces where needed. Every check runs again.';
-  $<HTMLInputElement>('prefer-lego').checked = preferLego;
+
+// ---------- ② instructions reader: pages are drawn only when looked at ----------
+type Maker = import('./export/pdf').PageMaker;
+let maker: Maker | null = null, makerFor: Model | null = null, pageNo = 1;
+let thumbObserver: IntersectionObserver | null = null;
+async function renderReader(m: Model) {
+  const { PageMaker } = await import('./export/pdf');
+  if (current() !== m) return;
+  maker?.dispose();
+  maker = new PageMaker(m, grid!, { label: plateLabel(), renderSize: isPhone ? 800 : 1000 });
+  makerFor = m;
+  const range = $<HTMLInputElement>('pg-range');
+  range.max = String(maker.total);
+  $('manual-sub').textContent = `${m.steps.length} steps · ${maker.total} pages · one page per layer`;
+  $('pdf-note').textContent = `PDF · ${maker.total} pages`;
+  // thumbnails: placeholders now, drawn when they scroll into view
+  thumbObserver?.disconnect();
+  const strip = $('thumbs'); strip.innerHTML = '';
+  const queue: number[] = [];
+  let drawing = false;
+  const drain = () => {
+    if (drawing || !queue.length || !maker) return;
+    drawing = true;
+    const n = queue.shift()!, c = strip.querySelector<HTMLCanvasElement>(`[data-n="${n}"] canvas`);
+    setTimeout(() => {
+      if (c && maker && makerFor === m) c.getContext('2d')!.drawImage(maker.page(n), 0, 0, c.width, c.height);
+      drawing = false; drain();
+    }, 0);
+  };
+  thumbObserver = new IntersectionObserver(es => es.forEach(e => {
+    if (!e.isIntersecting) return;
+    const n = +(e.target as HTMLElement).dataset.n!;
+    thumbObserver!.unobserve(e.target); queue.push(n); drain();
+  }), { root: strip, rootMargin: '0px 240px' });
+  for (let n = 1; n <= maker.total; n++) {
+    const b = document.createElement('button');
+    b.dataset.n = String(n);
+    const c = document.createElement('canvas'); c.width = 224; c.height = 158;
+    b.append(c, maker.label(n));
+    b.addEventListener('click', () => showPage(n));
+    strip.append(b); thumbObserver.observe(b);
+  }
+  showPage(1);
 }
-/** The "Before you order" notice, once per visit, before the first order file. */
-let understood = false;
-function beforeOrder(): Promise<boolean> {
-  if (understood) return Promise.resolve(true);
-  const d = $<HTMLDialogElement>('before-order'), ok = $<HTMLInputElement>('bo-ok'), go = $<HTMLButtonElement>('bo-continue');
-  ok.checked = false; go.disabled = true;
-  ok.onchange = () => { go.disabled = !ok.checked; };
-  d.showModal();
-  return new Promise(res => { d.onclose = () => { understood = d.returnValue === 'ok' && ok.checked; res(understood); }; });
+function showPage(n: number) {
+  if (!maker) return;
+  pageNo = Math.max(1, Math.min(maker.total, n));
+  const c = $<HTMLCanvasElement>('page-canvas');
+  c.getContext('2d')!.drawImage(maker.page(pageNo), 0, 0, c.width, c.height);
+  $<HTMLInputElement>('pg-range').value = String(pageNo);
+  $('pg-label').textContent = `${maker.label(pageNo)}${pageNo > 1 && pageNo <= maker.steps + 1 ? ` of ${maker.steps}` : ''}`;
+  $<HTMLButtonElement>('pg-prev').disabled = pageNo === 1;
+  $<HTMLButtonElement>('pg-next').disabled = pageNo === maker.total;
+  const strip = $('thumbs');
+  strip.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.n! === pageNo));
+  const on = strip.querySelector<HTMLElement>(`[data-n="${pageNo}"]`);
+  if (on) strip.scrollTo({ left: on.offsetLeft - strip.clientWidth / 2 + on.clientWidth / 2, behavior: 'smooth' });
 }
-async function orderDownload(make: (m: Model) => void) {
-  const m = current();
-  if (m && await beforeOrder()) make(m);
+$('pg-prev').addEventListener('click', () => showPage(pageNo - 1));
+$('pg-next').addEventListener('click', () => showPage(pageNo + 1));
+$('pg-range').addEventListener('input', e => showPage(+(e.target as HTMLInputElement).value));
+$('page-view').tabIndex = 0;
+$('page-view').addEventListener('keydown', e => { if (e.key === 'ArrowRight') showPage(pageNo + 1); if (e.key === 'ArrowLeft') showPage(pageNo - 1); });
+{ // swipe on phones
+  let x0: number | null = null;
+  $('page-view').addEventListener('pointerdown', e => { x0 = e.clientX; });
+  $('page-view').addEventListener('pointerup', e => { if (x0 !== null && Math.abs(e.clientX - x0) > 40) showPage(pageNo + (e.clientX < x0 ? 1 : -1)); x0 = null; });
 }
-$('dl-pab').addEventListener('click', () => orderDownload(m => {
-  const files = pickABrickFiles(m);
-  files.forEach((f, i) => setTimeout(() => save(new Blob([f], { type: 'text/csv' }), `${baseName()}-pick-a-brick${files.length > 1 ? `-${i + 1}-of-${files.length}` : ''}.csv`), i * 400));
-}));
-$('dl-xml').addEventListener('click', () => orderDownload(m => save(new Blob([brickLinkXML(m)], { type: 'application/xml' }), `${baseName()}-bricklink.xml`)));
-async function copyList(button: HTMLElement, text: string) {
-  const label = button.textContent;
-  try { await navigator.clipboard.writeText(text); button.textContent = 'Copied ✓'; }
-  catch { button.textContent = 'Use ⬇ instead'; }
-  setTimeout(() => { button.textContent = label; }, 1800);
-}
-$('copy-xml').addEventListener('click', () => orderDownload(m => copyList($('copy-xml'), brickLinkXML(m))));
-$('copy-xml-rest').addEventListener('click', () => orderDownload(m => copyList($('copy-xml-rest'), brickLinkRemainderXML(m))));
-$('dl-xml-rest').addEventListener('click', () => orderDownload(m => save(new Blob([brickLinkRemainderXML(m)], { type: 'application/xml' }), `${baseName()}-bricklink-not-at-lego.xml`)));
-$('prefer-lego').addEventListener('change', e => {
-  preferLego = (e.target as HTMLInputElement).checked;
-  $('prefer-note').textContent = 'Rebuilding and checking…';
-  setSize(size);
+let labelTimer = 0;
+$('punkno').addEventListener('input', () => {
+  clearTimeout(labelTimer);
+  labelTimer = window.setTimeout(() => { const m = current(); if (m) { const keep = pageNo; renderReader(m).then(() => showPage(keep)); } renderBustSub(); }, 500);
 });
-$('open-order').addEventListener('click', async () => { if (current() && await beforeOrder()) $<HTMLDialogElement>('order-panel').showModal(); });
-$('op-close').addEventListener('click', () => $<HTMLDialogElement>('order-panel').close());
-$<HTMLDialogElement>('order-panel').addEventListener('click', e => { if (e.target === e.currentTarget) (e.currentTarget as HTMLDialogElement).close(); });
+$('dl-pdf').addEventListener('click', () => run('Instructions', async () => {
+  const { makeInstructions } = await import('./export/pdf');
+  progress('Drawing the instructions…', 0);
+  const pdf = await makeInstructions(current()!, grid!, { label: plateLabel(), renderSize: isPhone ? 800 : 1100, onProgress: (d, t) => progress(`Drawing page ${d} of ${t}…`, d / t) });
+  save(pdf, `${baseName()}-instructions.pdf`);
+}));
 $('dl-kit').addEventListener('click', () => run('Kit', async () => {
   const [{ makeInstructions }, { makeZip }] = await Promise.all([import('./export/pdf'), import('./export/zip')]);
   const m = current()!, name = baseName();
@@ -255,7 +279,7 @@ $('dl-kit').addEventListener('click', () => run('Kit', async () => {
   const pdf = await makeInstructions(m, grid!, { label: plateLabel(), renderSize: isPhone ? 800 : 1100, onProgress: (d, t) => progress(`Drawing page ${d} of ${t}…`, d / t) });
   const readme = [`${name} — made with Punk to Bricks`, '', `${m.checks.pieces} pieces · ${m.steps.length} steps · ${m.bom.length} lots · about ${m.dims.join(' × ')} cm`, '',
     `${name}-instructions.pdf   step-by-step instructions, one page per layer`, `${name}-parts.csv   parts list (BrickLink part and colour numbers)`, '',
-    'To order the bricks, use "Order the bricks" on the site: it makes your LEGO Pick a Brick and BrickLink files.', '',
+    'To order the bricks, use "Buy the bricks" on the site: it makes your LEGO Pick a Brick and BrickLink lists.', '',
     'Models are generated automatically and checked by software only. They have NOT been physically built. Provided "as is", without warranty of any kind.',
     'Unofficial fan project · Not affiliated with, sponsored or endorsed by the LEGO Group, BrickLink or the CryptoPunks project. LEGO® is a trademark of the LEGO Group. Parts data: Rebrickable.', ''].join('\r\n');
   save(await makeZip([{ name: `${name}-instructions.pdf`, data: pdf }, { name: `${name}-parts.csv`, data: partsCSV(m) }, { name: 'README.txt', data: readme }]), `${name}-kit.zip`);
@@ -267,6 +291,121 @@ for (const format of ['square', 'story'] as const) $(format === 'square' ? 'vid-
     onProgress: (stage, f) => progress(stage === 'pages' ? 'Preparing the booklet pages…' : 'Recording the video (24 s)… keep this tab open', f) });
   save(blob, `${baseName()}-${format === 'story' ? '9x16' : 'square'}.${ext}`);
 }));
+
+// ---------- ③ buy the bricks ----------
+function renderBuy(m: Model) {
+  const s = orderSummary(m), total = m.bom.length, pcs = m.checks.pieces.toLocaleString('en');
+  const legoSet = new Set(s.lego.map(l => `${l.part}|${l.color}`));
+  $('shop-sum').textContent = `${total} lots · ${pcs} pieces · BrickLink part numbers`;
+  const g = $('shop-grid'); g.innerHTML = '';
+  for (const b of m.bom) {
+    const lot = document.createElement('div'); lot.className = 'lot';
+    const at = legoSet.has(`${b.part}|${b.color}`);
+    lot.title = `${b.qty}× ${b.name}, ${b.colorName} (${b.part}) · ${at ? 'at LEGO Pick a Brick' : 'BrickLink only'}`;
+    const c = document.createElement('canvas'); c.width = 112; c.height = 88;
+    icon(c.getContext('2d')!, 56, 44, b.d, b.w, renderHex(b.color), 96, b.kind);
+    const dot = document.createElement('i'); dot.className = `dot ${at ? 'lego' : 'bl'}`;
+    const t = document.createElement('span');
+    t.innerHTML = `<span class="q">${b.qty}x</span><small>${b.name}</small><small>${b.colorName}</small>`;
+    lot.append(dot, c, t); g.append(lot);
+  }
+  const more = $('shop-more');
+  more.hidden = total <= 8;
+  $('shoplist').classList.toggle('open', false);
+  more.textContent = `See all ${total} lots ▾`;
+  // LEGO button
+  $('lego-n').textContent = String(s.lego.length);
+  $('lego-total').textContent = `/${total} lots`;
+  $<HTMLButtonElement>('buy-lego').disabled = s.lego.length === 0;
+  $('lego-after').hidden = true;
+  const other = models.get(`${size}|${!preferLego}`);
+  const delta = other ? (preferLego ? m.checks.pieces - other.checks.pieces : other.checks.pieces - m.checks.pieces) : null;
+  const plus = delta === null ? '' : ` (${delta >= 0 ? '+' : ''}${delta} pieces)`;
+  $('lego-option').hidden = !preferLego && s.brickLinkOnly.length === 0;
+  $('prefer-text').textContent = preferLego
+    ? `Only parts LEGO sells: on${plus}, every check passed again`
+    : `Get all ${total} lots at LEGO: use only parts LEGO sells${plus}`;
+  $<HTMLInputElement>('prefer-lego').checked = preferLego;
+  // BrickLink button: the missing lots, or everything if LEGO has it all
+  const missing = s.brickLinkOnly.length;
+  $('bl-n').textContent = String(missing || total);
+  $('bl-total').textContent = `/${total} lots`;
+  $('bl-sub').textContent = missing ? 'Independent shops · the rest' : 'Independent shops · if LEGO runs out';
+  $('bl-after').hidden = true;
+  $('bl-option').hidden = missing === 0;
+  $('copy-all').textContent = `copy all ${total} lots`;
+  const files = pickABrickFiles(m).length;
+  $('pab-files').textContent = files > 1 ? `${files} files, 400 references each at most` : 'one CSV file';
+  $('dl-xml-rest').hidden = missing === 0;
+  // how many extra pieces "only parts LEGO sells" would cost: build it in the background
+  if (!preferLego && missing && !other && grid) {
+    const g0 = grid, s0 = size;
+    build({ size: s0, grid: g0, preferLego: true }).then(r => { if (r.ok && grid === g0) { models.set(`${s0}|true`, r.model); if (current() === m) renderBuy(m); } });
+  }
+}
+$('shop-more').addEventListener('click', () => {
+  const open = $('shoplist').classList.toggle('open');
+  $('shop-more').textContent = open ? 'Show less ▴' : `See all ${current()?.bom.length ?? ''} lots ▾`;
+});
+/** The "Before you order" notice, once per visit, before the first order file. */
+let understood = false;
+function beforeOrder(): Promise<boolean> {
+  if (understood) return Promise.resolve(true);
+  const d = $<HTMLDialogElement>('before-order'), ok = $<HTMLInputElement>('bo-ok'), go = $<HTMLButtonElement>('bo-continue');
+  ok.checked = false; go.disabled = true;
+  ok.onchange = () => { go.disabled = !ok.checked; };
+  d.showModal();
+  return new Promise(res => { d.onclose = () => { understood = d.returnValue === 'ok' && ok.checked; res(understood); }; });
+}
+async function orderAction(make: (m: Model) => void | Promise<void>) {
+  const m = current();
+  if (m && await beforeOrder()) await make(m);
+}
+const downloadLego = (m: Model) => {
+  const files = pickABrickFiles(m);
+  files.forEach((f, i) => setTimeout(() => save(new Blob([f], { type: 'text/csv' }), `${baseName()}-pick-a-brick${files.length > 1 ? `-${i + 1}-of-${files.length}` : ''}.csv`), i * 400));
+  return files.length;
+};
+async function copyOrSave(xml: string, file: string): Promise<'copied' | 'downloaded'> {
+  try { await navigator.clipboard.writeText(xml); return 'copied'; }
+  catch { save(new Blob([xml], { type: 'application/xml' }), file); return 'downloaded'; }
+}
+$('buy-lego').addEventListener('click', () => orderAction(m => {
+  const n = downloadLego(m);
+  $('lego-after-text').textContent = n > 1 ? `${n} lists downloaded` : 'List downloaded';
+  $('lego-after').hidden = false;
+}));
+async function buyBrickLink(all: boolean) {
+  await orderAction(async m => {
+    const missing = orderSummary(m).brickLinkOnly.length;
+    const everything = all || missing === 0;
+    const how = await copyOrSave(everything ? brickLinkXML(m) : brickLinkRemainderXML(m), `${baseName()}-bricklink${everything ? '' : '-missing'}.xml`);
+    const lots = everything ? m.bom.length : missing;
+    $('bl-after-text').textContent = how === 'copied' ? `List copied (${lots} of ${m.bom.length} lots)` : `Couldn’t copy: list downloaded instead (open it and copy its text)`;
+    $('bl-after').hidden = false;
+  });
+}
+$('buy-bl').addEventListener('click', () => buyBrickLink(false));
+$('copy-all').addEventListener('click', () => buyBrickLink(true));
+$('dl-pab').addEventListener('click', () => orderAction(m => { downloadLego(m); }));
+$('dl-xml').addEventListener('click', () => orderAction(m => save(new Blob([brickLinkXML(m)], { type: 'application/xml' }), `${baseName()}-bricklink.xml`)));
+$('dl-xml-rest').addEventListener('click', () => orderAction(m => save(new Blob([brickLinkRemainderXML(m)], { type: 'application/xml' }), `${baseName()}-bricklink-missing.xml`)));
+$('prefer-lego').addEventListener('change', e => {
+  preferLego = (e.target as HTMLInputElement).checked;
+  $('prefer-text').textContent = 'Rebuilding with parts LEGO sells and checking again…';
+  setSize(size);
+});
+
+// ---------- sticky section menu ----------
+const secLinks = [...document.querySelectorAll<HTMLAnchorElement>('#secnav a')];
+const secObserver = new IntersectionObserver(es => {
+  for (const e of es) if (e.isIntersecting) secLinks.forEach(a => a.classList.toggle('on', a.dataset.sec === e.target.id));
+}, { rootMargin: '-45% 0px -50% 0px' });
+['sec-bust', 'sec-manual', 'sec-buy'].forEach(id => secObserver.observe($(id)));
+function renderBustSub() {
+  const m = current(); if (!m) return;
+  $('bust-sub').textContent = `${plateLabel() ? `Punk ${plateLabel()} · ` : ''}${m.size === 'xl' ? 'XL' : 'Mini'} · built and checked in your browser`;
+}
 function shareLink() {
   const m = current();
   const text = m
