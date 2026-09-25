@@ -87,3 +87,19 @@ main { max-width: 1080px; margin: 0 auto; padding: 0 16px 32px; }
 
 .foot { max-width: 1080px; margin: 0 auto; padding: 8px 16px 28px; font-size: 13px; color: var(--muted); }
 .foot p { margin: 4px 0; }
+
+.exports { display: grid; gap: 14px; margin-top: 18px; padding-top: 16px; border-top: 1px solid var(--line); }
+@media (min-width: 760px) { .exports { grid-template-columns: 1fr 1fr; } .progress { grid-column: 1 / -1; } }
+.exports h2 { font-size: 15px; margin: 0 0 8px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); }
+.dl { display: flex; flex-wrap: wrap; gap: 8px; }
+.dl button, .dl a { border: 1px solid var(--line); background: var(--card); border-radius: 12px; padding: 10px 14px; font-weight: 700; text-align: left; text-decoration: none; color: var(--ink); }
+.dl button:hover, .dl a:hover { border-color: var(--accent); }
+.dl button:disabled { opacity: .5; cursor: progress; }
+.dl small { display: block; font-weight: 500; font-size: 12px; color: var(--muted); }
+.dl .big { background: var(--ink); color: var(--card); border-color: var(--ink); }
+.dl .big small { color: color-mix(in srgb, var(--card) 75%, transparent); }
+.dl .x { background: #000; color: #fff; border-color: #000; display: flex; align-items: center; }
+.small { font-size: 12px; color: var(--muted); margin: 8px 0 0; }
+.progress { display: flex; align-items: center; gap: 10px; font-size: 14px; font-weight: 600; }
+.bar { flex: 1; height: 8px; background: var(--bg); border-radius: 4px; overflow: hidden; }
+.bar i { display: block; height: 100%; width: 0; background: var(--accent); transition: width .2s; }

@@ -36,7 +36,7 @@ export class Viewer {
   private v3 = new THREE.Vector3();
   private zero = new THREE.Matrix4().makeScale(0, 0, 0);
 
-  constructor(private canvas: HTMLCanvasElement, private opts: { lowPoly?: boolean; label?: string } = {}) {
+  constructor(private canvas: HTMLCanvasElement, private opts: { lowPoly?: boolean; label?: string; fixedSize?: [number, number] } = {}) {
     this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, preserveDrawingBuffer: true });
     this.renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     this.renderer.shadowMap.enabled = true;
@@ -60,6 +60,12 @@ export class Viewer {
     this.controls.enabled = false;
     this.controls.addEventListener('change', () => { this.dirty = true; });
     this.controls.addEventListener('start', () => { this.controls.autoRotate = false; });
+    if (opts.fixedSize) {
+      // off-screen (video export): fixed size, frames rendered on demand
+      this.renderer.setPixelRatio(1);
+      this.resize();
+      return;
+    }
     new ResizeObserver(() => this.resize()).observe(canvas);
     this.resize();
     const loop = () => { requestAnimationFrame(loop); this.frame(); };
@@ -67,11 +73,11 @@ export class Viewer {
   }
 
   resize() {
-    const w = this.canvas.clientWidth || 1, h = this.canvas.clientHeight || 1;
+    const [w, h] = this.opts.fixedSize ?? [this.canvas.clientWidth || 1, this.canvas.clientHeight || 1];
     this.renderer.setSize(w, h, false);
     this.camera.aspect = w / h;
-    // keep the whole bust in view on tall (phone) screens
-    this.camera.fov = w / h < 0.8 ? 30 / Math.max(0.55, w / h / 0.8) : 30;
+    // same horizontal field as a square 30° view on tall screens (phones, 9:16 video)
+    this.camera.fov = w >= h ? 30 : (2 * Math.atan(Math.tan((15 * Math.PI) / 180) / (w / h)) * 180) / Math.PI;
     this.camera.updateProjectionMatrix();
     this.dirty = true;
   }
@@ -237,6 +243,12 @@ export class Viewer {
   render() {
     this.renderer.render(this.scene, this.camera);
     this.dirty = false;
+  }
+
+  dispose() {
+    this.clear();
+    this.controls.dispose();
+    this.renderer.dispose();
   }
 
   get isPlaying() { return this.playing; }

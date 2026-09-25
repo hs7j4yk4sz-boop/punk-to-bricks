@@ -3,6 +3,7 @@ import { hexToRgb, rgbToHex } from './core/color';
 import type { PunkGrid, RGBAImage } from './core/detect';
 import { REFERENCE_PUNK, TEST_PUNKS, type TestPunk } from './examples/punks';
 import { Viewer } from './viewer/scene';
+import { brickLinkXML, partsCSV } from './export/parts';
 import type { BuildReply, BuildRequest } from './worker/build.worker';
 
 const $ = <T extends HTMLElement>(id: string) => document.getElementById(id) as T;
@@ -121,6 +122,53 @@ $('replay').addEventListener('click', () => { $('hint').hidden = true; viewer.pl
 $('skip').addEventListener('click', () => viewer.skip());
 export const plateLabel = () => { const n = $<HTMLInputElement>('punkno').value.replace(/\D/g, '').slice(0, 5); return n ? `#${n}` : ''; };
 $('punkno').addEventListener('input', () => viewer.setLabel(plateLabel()));
+
+// ---------- exports ----------
+const current = () => models[size] ?? null;
+const baseName = () => `${plateLabel() ? 'punk-' + plateLabel().slice(1) : 'my-punk'}-${size}`;
+function save(blob: Blob, name: string) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60_000);
+}
+function progress(text: string | null, f = 0) {
+  $('progress').hidden = text === null;
+  if (text !== null) { $('progress-text').textContent = text; $('bar').style.width = `${Math.round(f * 100)}%`; }
+}
+let exporting = false;
+async function run(label: string, job: () => Promise<void>) {
+  if (exporting || !current()) return;
+  exporting = true;
+  document.querySelectorAll<HTMLButtonElement>('.dl button').forEach(b => { b.disabled = true; });
+  try { await job(); progress(null); }
+  catch (e) { progress(`${label} failed: ${(e as Error).message}`, 0); }
+  finally { exporting = false; document.querySelectorAll<HTMLButtonElement>('.dl button').forEach(b => { b.disabled = false; }); }
+}
+$('dl-csv').addEventListener('click', () => { const m = current(); if (m) save(new Blob([partsCSV(m)], { type: 'text/csv' }), `${baseName()}-parts.csv`); });
+$('dl-xml').addEventListener('click', () => { const m = current(); if (m) save(new Blob([brickLinkXML(m)], { type: 'application/xml' }), `${baseName()}-bricklink.xml`); });
+$('dl-pdf').addEventListener('click', () => run('Instructions', async () => {
+  const { makeInstructions } = await import('./export/pdf');
+  progress('Drawing the instructions…', 0);
+  const blob = await makeInstructions(current()!, grid!, { label: plateLabel(), renderSize: isPhone ? 800 : 1100, onProgress: (d, t) => progress(`Drawing page ${d} of ${t}…`, d / t) });
+  save(blob, `${baseName()}-instructions.pdf`);
+}));
+for (const format of ['square', 'story'] as const) $(format === 'square' ? 'vid-square' : 'vid-story').addEventListener('click', () => run('Video', async () => {
+  const { recordVideo } = await import('./export/video');
+  progress('Recording the video… keep this tab open', 0);
+  const { blob, ext } = await recordVideo(current()!, { format, label: plateLabel(), small: isPhone, onProgress: f => progress('Recording the video… keep this tab open', f) });
+  save(blob, `${baseName()}-${format === 'story' ? '9x16' : 'square'}.${ext}`);
+}));
+function shareLink() {
+  const m = current();
+  const text = m
+    ? `I turned my CryptoPunk into a ${m.checks.pieces.toLocaleString('en')}-piece brick bust you can really build 🧱\n\nMade with Punk to Bricks, inspired by @victormustar's Microduck.`
+    : 'Turn your CryptoPunk into a brick bust you can really build 🧱';
+  const url = location.origin + location.pathname;
+  $<HTMLAnchorElement>('share-x').href = `https://x.com/intent/post?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`;
+}
+$('share-x').addEventListener('pointerdown', shareLink);
+$('share-x').addEventListener('focus', shareLink);
 
 const examples = [REFERENCE_PUNK, ...TEST_PUNKS.filter(p => ['cap', 'long-hair-woman', 'pipe', 'hoodie', 'alien-cap', 'ape-beanie', 'zombie', 'cowboy-hat', 'mohawk', 'vr'].includes(p.name))];
 for (const p of examples) {
